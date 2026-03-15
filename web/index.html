@@ -767,12 +767,14 @@ const i18n = {
     deleted: 'Smazáno',
     errorPrefix: 'Chyba:',
     missingData: 'Chybí pole Data',
-    battDischarging: '▲ vybíjí',
-    battCharging: '▼ nabíjí',
+    battDischarging: '▶ vybíjí',
+    battCharging: '◀ nabíjí',
     deleteConfirm: 'Smazat „{name}"?',
     lastUpdate: 'Poslední aktualizace: --',
     manualRefresh: 'Obnovovat ručně',
     language: 'Jazyk',
+    gridExport: '▶ export',
+    gridImport: '◀ import',
   },
   en: {
     disconnected: 'Not connected',
@@ -830,12 +832,14 @@ const i18n = {
     deleted: 'Deleted',
     errorPrefix: 'Error:',
     missingData: 'Missing Data array',
-    battDischarging: '▲ discharge',
-    battCharging: '▼ charge',
+    battDischarging: '▶ discharge',
+    battCharging: '◀ charge',
     deleteConfirm: 'Delete "{name}"?',
     lastUpdate: 'Last update: --',
     manualRefresh: 'Refresh manually',
     language: 'Language',
+    gridExport: '▶ export',
+    gridImport: '◀ import',
   }
 };
 
@@ -1084,7 +1088,7 @@ function updateUI(d) {
   const gE=$('gridPower');
   gE.textContent=Math.abs(d.feedInPower);
   gE.className='flow-node-value '+(d.feedInPower>0?'exporting':d.feedInPower<0?'importing':'');
-  gE.parentElement.querySelector('.flow-node-unit').textContent='W '+(d.feedInPower>0?'◀ export':d.feedInPower<0?'▶ import':'');
+  gE.parentElement.querySelector('.flow-node-unit').textContent='W '+(d.feedInPower>0?t('gridExport'):d.feedInPower<0?t('gridImport'):'');
   $('feedinPower').textContent=d.feedInPower+' W';
   $('gridAV').textContent=d.GridAVoltage.toFixed(0)+' V';
   $('gridBV').textContent=d.GridBVoltage.toFixed(0)+' V';
