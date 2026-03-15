@@ -149,11 +149,6 @@
   .node-grid .flow-node-value.importing { color: var(--grid-pos); }
   .node-home .flow-node-value { color: var(--accent); }
 
-  .flow-arrow {
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; color: var(--text-dim); min-height: 28px;
-  }
-  .flow-arrow.active { color: var(--solar); }
 
   /* ─── Status Row ─── */
   .status-row { display: flex; gap: 8px; margin-bottom: 12px; }
@@ -467,7 +462,6 @@
           </div>
           <div style="font-size:11px;color:var(--text-dim);margin-top:3px"><span id="batterySOC">--%</span></div>
         </div>
-        <div class="flow-arrow" id="arrowSolarDown">↓</div>
         <div class="flow-node node-grid">
           <div class="flow-node-icon">⚡</div>
           <div class="flow-node-label" id="flowLabelGrid"></div>
