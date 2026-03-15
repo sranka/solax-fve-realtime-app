@@ -957,15 +957,41 @@ document.querySelectorAll('#langButtons .lang-btn').forEach(btn => {
 // ═══════════════════════════════════════════
 const STORAGE_KEY = 'solax_fve_connections';
 const ACTIVE_KEY = 'solax_fve_active';
+const CRYPT_KEY = 's0LaX-g4!2025xH';
+
+async function _deriveKey() {
+  const enc = new TextEncoder().encode(CRYPT_KEY);
+  const hash = await crypto.subtle.digest('SHA-256', enc);
+  return crypto.subtle.importKey('raw', hash, 'AES-GCM', false, ['encrypt','decrypt']);
+}
+
+async function _encrypt(text) {
+  const key = await _deriveKey();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM',iv}, key, new TextEncoder().encode(text));
+  const buf = new Uint8Array(iv.length + ct.byteLength);
+  buf.set(iv); buf.set(new Uint8Array(ct), iv.length);
+  return 'E' + btoa(String.fromCharCode(...buf));
+}
+
+async function _decrypt(data) {
+  if (!data.startsWith('E')) return data;
+  const raw = Uint8Array.from(atob(data.slice(1)), c => c.charCodeAt(0));
+  const key = await _deriveKey();
+  const iv = raw.slice(0, 12);
+  const ct = raw.slice(12);
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM',iv}, key, ct);
+  return new TextDecoder().decode(pt);
+}
 
 function generateId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
-function loadConnections() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { return []; } }
-function saveConnections(list) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch(e) {} }
+async function loadConnections() { try { const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return []; const text = await _decrypt(raw); return JSON.parse(text) || []; } catch(e) { return []; } }
+async function saveConnections(list) { try { const enc = await _encrypt(JSON.stringify(list)); localStorage.setItem(STORAGE_KEY, enc); } catch(e) {} }
 function getActiveId() { try { return localStorage.getItem(ACTIVE_KEY) || null; } catch(e) { return null; } }
 function setActiveId(id) { try { localStorage.setItem(ACTIVE_KEY, id || ''); } catch(e) {} }
 
 
-let connections = loadConnections();
+let connections = [];
 let activeId = getActiveId();
 let refreshTimer = null;
 let lastData = null;
@@ -1316,7 +1342,7 @@ document.getElementById('addNewConn').addEventListener('click',()=>openEditModal
 document.getElementById('cancelEdit').addEventListener('click',closeEditModal);
 document.getElementById('editModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeEditModal()});
 
-document.getElementById('saveConn').addEventListener('click',()=>{
+document.getElementById('saveConn').addEventListener('click',async()=>{
   const host=document.getElementById('cfgHost').value.trim();
   const password=document.getElementById('cfgPassword').value.trim();
   const protocol=document.getElementById('cfgProtocol').value;
@@ -1339,7 +1365,7 @@ document.getElementById('saveConn').addEventListener('click',()=>{
     if(connections.length===1){activeId=id;setActiveId(id);}
   }
 
-  saveConnections(connections);
+  await saveConnections(connections);
   closeEditModal();
   renderConnList();
   updateSwitcher();
@@ -1362,10 +1388,10 @@ function confirmDelete(id,name){
 document.getElementById('confirmNo').addEventListener('click',()=>{
   document.getElementById('confirmOverlay').classList.remove('open');pendingDeleteId=null;
 });
-document.getElementById('confirmYes').addEventListener('click',()=>{
+document.getElementById('confirmYes').addEventListener('click',async()=>{
   if(pendingDeleteId){
     connections=connections.filter(c=>c.id!==pendingDeleteId);
-    saveConnections(connections);
+    await saveConnections(connections);
     if(activeId===pendingDeleteId){
       activeId=connections.length?connections[0].id:null;
       setActiveId(activeId||'');
@@ -1394,9 +1420,12 @@ function esc(s){const d=document.createElement('div');d.textContent=s;return d.i
 // ═══════════════════════════════════════════
 //  Init
 // ═══════════════════════════════════════════
-applyLanguage();
-updateSwitcher();
-startPolling();
+(async()=>{
+  connections = await loadConnections();
+  applyLanguage();
+  updateSwitcher();
+  startPolling();
+})();
 
 // ═══════════════════════════════════════════
 //  Pull-to-refresh
