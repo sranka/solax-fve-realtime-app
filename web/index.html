@@ -206,6 +206,11 @@
     padding: 8px; font-size: 11px;
     color: var(--text-dim); font-family: 'JetBrains Mono', monospace;
   }
+  .build-fingerprint {
+    text-align: center; padding: 2px 8px 8px; font-size: 9px;
+    color: var(--text-dim); opacity: 0.5;
+    font-family: 'JetBrains Mono', monospace;
+  }
   .pause-btn {
     background: rgba(255,255,255,0.06); border: 1px solid var(--card-border);
     color: var(--text-dim); border-radius: 8px;
@@ -345,7 +350,7 @@
 
   /* ─── Toast ─── */
   .toast {
-    position: fixed; bottom: 20px; left: 50%; z-index: 300;
+    position: fixed; bottom: 70px; left: 50%; z-index: 300;
     transform: translateX(-50%) translateY(100px);
     background: var(--danger); color: #fff; padding: 10px 20px;
     border-radius: 10px; font-size: 13px; font-weight: 500;
@@ -539,6 +544,7 @@
       <button class="pause-btn" id="pauseBtn" aria-label="Pause">⏸</button>
       <span id="refreshBar">--</span>
     </div>
+    <div class="build-fingerprint" id="buildFingerprint"></div>
   </div>
 </div>
 
@@ -1241,6 +1247,14 @@ function esc(s){const d=document.createElement('div');d.textContent=s;return d.i
 applyLanguage();
 updateSwitcher();
 startPolling();
+</script>
+<script src="build-info.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(regs) {
+    regs.forEach(function(r) { r.unregister(); });
+  });
+}
 </script>
 </body>
 </html>

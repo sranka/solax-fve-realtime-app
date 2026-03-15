@@ -22,5 +22,8 @@ android/app/src/main/assets/public/
 # Java / SDK
 .sdkmanrc
 
+# Generated build info
+web/build-info.js
+
 # Misc
 *.log
