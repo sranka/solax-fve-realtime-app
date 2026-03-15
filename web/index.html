@@ -393,7 +393,7 @@
   /* ─── Toast ─── */
   .toast {
     position: fixed; bottom: 70px; left: 50%; z-index: 300;
-    transform: translateX(-50%) translateY(100px);
+    transform: translateX(-50%) translateY(calc(100% + 70px));
     background: var(--danger); color: #fff; padding: 10px 20px;
     border-radius: 10px; font-size: 13px; font-weight: 500;
     transition: transform 0.3s ease; max-width: 90%; text-align: center;
