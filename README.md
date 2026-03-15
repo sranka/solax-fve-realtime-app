@@ -27,18 +27,20 @@ The app shows a dashboard with:
 ## Local Development
 
 ```bash
-npm run dev
+DEV_PROXY_TARGET=http://192.168.199.192 npm start
 ```
 
-Starts a local HTTP server and opens Chrome with relaxed security settings so the app can connect to inverters on the local network. The app opens at [http://localhost:8080](http://localhost:8080).
+Starts a Node.js dev server at [http://localhost:8080](http://localhost:8080) that serves the web app and proxies all POST requests to the inverter specified by `DEV_PROXY_TARGET`. This avoids CORS/mixed-content issues without any special browser flags. Without `DEV_PROXY_TARGET`, it serves static files only.
 
-Chrome normally blocks requests from web pages to local network IPs (Private Network Access / CORS restrictions). The `dev` script launches Chrome with `--disable-web-security` and a separate profile to bypass this. This is safe for local development only.
+### Insecure mode (legacy)
 
-To start just the server without opening Chrome:
+If you prefer the old approach that launches Chrome with relaxed security:
 
 ```bash
-npm start
+npm run dev:insecure
 ```
+
+This opens Chrome with `--disable-web-security` and a separate profile so the app can directly call the inverter. Use only for local development.
 
 **Note:** The PWA install prompt (Add to Home Screen) only works on `localhost` or over HTTPS due to browser security restrictions. On Android, you can still add the page to your home screen manually via the browser menu.
 
