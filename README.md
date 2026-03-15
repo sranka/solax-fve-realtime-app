@@ -1,10 +1,10 @@
 # Solax FVE Monitor
 
-Real-time monitoring app for **Solax X3 Hybrid G4** solar inverters. Connects directly to the inverter's local API and displays live power flow, battery status, grid details, and energy statistics.
+Real-time monitoring app for **Solax X3 Hybrid G4** solar inverters. Connects directly to the inverter's local API and displays live power data, battery status, grid details, and energy statistics.
 
 ## Features
 
-- Live power flow visualization (Solar, Battery, Grid, Home consumption)
+- Live power data (Solar, Battery, Grid, Home consumption)
 - 3-phase grid details (voltage, current, power, frequency)
 - Battery status (SoC, voltage, temperature, charge/discharge)
 - EPS (backup power) monitoring
@@ -12,12 +12,9 @@ Real-time monitoring app for **Solax X3 Hybrid G4** solar inverters. Connects di
 - Multiple inverter support with quick switching
 - Works as a standalone Android app or a web app in the browser
 
-## Screenshots
+## Screenshot
 
-The app shows a dashboard with:
-- Power flow diagram (Solar -> Home, Battery, Grid)
-- Status chips (run mode, daily yield, total yield)
-- Detailed cards for solar panels, battery, grid phases, and EPS
+<img src="docs/screenshot.png" width="320" alt="Solax FVE Monitor dashboard">
 
 ## Requirements
 
