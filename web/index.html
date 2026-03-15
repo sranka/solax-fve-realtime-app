@@ -1064,8 +1064,6 @@ function startPolling() {
   if(refreshTimer) clearInterval(refreshTimer);
   lastData=null;
   consecutiveErrors=0;
-  paused=false;
-  updatePauseBtn();
   document.getElementById('errorBanner').classList.remove('show');
   const cfg=getActiveConfig();
   if(!cfg){
@@ -1075,12 +1073,13 @@ function startPolling() {
     document.getElementById('statusDot').className='status-dot';
     return;
   }
+  const manual = cfg.manualRefresh;
+  paused=!!manual;
+  updatePauseBtn();
   document.getElementById('setupScreen').style.display='none';
   document.getElementById('dashboard').style.display='';
   document.getElementById('headerSubtitle').textContent=cfg.name||cfg.host;
-  const manual = cfg.manualRefresh;
-  document.getElementById('pauseBtn').style.display = manual ? 'none' : '';
-  fetchData();
+  fetchData(true);
   if (!manual) {
     refreshTimer=setInterval(fetchData,(cfg.interval||10)*1000);
   }
@@ -1089,7 +1088,16 @@ function startPolling() {
 function togglePause(){
   paused=!paused;
   updatePauseBtn();
-  if(!paused) fetchData();
+  if(!paused){
+    fetchData();
+    const cfg=getActiveConfig();
+    if(cfg){
+      if(refreshTimer) clearInterval(refreshTimer);
+      refreshTimer=setInterval(fetchData,(cfg.interval||10)*1000);
+    }
+  } else {
+    if(refreshTimer){clearInterval(refreshTimer);refreshTimer=null;}
+  }
 }
 
 function updatePauseBtn(){
