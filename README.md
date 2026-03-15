@@ -42,8 +42,6 @@ npm run dev:insecure
 
 This opens Chrome with `--disable-web-security` and a separate profile so the app can directly call the inverter. Use only for local development.
 
-**Note:** The PWA install prompt (Add to Home Screen) only works on `localhost` or over HTTPS due to browser security restrictions. On Android, you can still add the page to your home screen manually via the browser menu.
-
 ## Android App
 
 The project uses [Capacitor](https://capacitorjs.com/) to wrap the web app into a native Android application. This removes the HTTPS/mixed-content restriction — the app can freely connect to inverters over HTTP on the local network.

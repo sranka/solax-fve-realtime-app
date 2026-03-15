@@ -2,7 +2,7 @@
   "name": "solax-x3-hybrid-g4",
   "version": "1.0.0",
   "description": "",
-  "main": "sw.js",
+  "main": "dev-server.js",
   "scripts": {
     "start": "node dev-server.js",
     "dev:insecure": "open -a 'Google Chrome' --args --disable-web-security --user-data-dir=/tmp/chrome-dev-solax http://localhost:8080 & python3 -m http.server 8080 -d web",
