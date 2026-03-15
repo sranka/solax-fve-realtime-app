@@ -57,10 +57,26 @@
     border-radius: 8px;
     flex-shrink: 0;
     overflow: hidden;
+    cursor: pointer;
   }
   .logo-icon img {
     width: 100%; height: 100%;
     display: block;
+  }
+  .header {
+    transition: transform 0.3s ease;
+  }
+  .header.header-hidden .header-left > *:not(.logo-icon),
+  .header.header-hidden .header-right {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .header.header-hidden {
+    position: absolute;
+    background: transparent;
+    border-bottom-color: transparent;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
   }
   .header h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
   .header-subtitle {
@@ -1255,6 +1271,9 @@ function renderConnList(){
   });
 }
 
+document.querySelector('.logo-icon').addEventListener('click',function(){
+  document.querySelector('.header').classList.toggle('header-hidden');
+});
 document.getElementById('openSettings').addEventListener('click',openSettingsModal);
 document.getElementById('pauseBtn').addEventListener('click',togglePause);
 document.getElementById('refreshBtn').addEventListener('click',function(){ fetchData(true); });
