@@ -76,9 +76,9 @@
   .header-btn {
     background: rgba(255,255,255,0.06); border: 1px solid var(--card-border);
     color: var(--text-dim); border-radius: 8px;
-    font-size: 22px; cursor: pointer; padding: 10px 12px;
+    font-size: 35px; cursor: pointer; padding: 4px;
     transition: color 0.2s, background 0.2s; line-height: 1;
-    min-width: 44px; min-height: 44px;
+    width: 44px; height: 44px;
     display: flex; align-items: center; justify-content: center;
   }
   .header-btn:hover, .header-btn:active { color: var(--text); background: rgba(255,255,255,0.12); }
@@ -207,9 +207,10 @@
   .refresh-btn {
     background: rgba(255,255,255,0.06); border: 1px solid var(--card-border);
     color: var(--text-dim); border-radius: 8px;
-    font-size: 16px; cursor: pointer; padding: 6px 10px;
+    font-size: 30px; cursor: pointer; padding: 4px;
     transition: color 0.2s, background 0.2s; line-height: 1;
-    min-width: 38px; min-height: 38px;
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
   }
   .refresh-btn:active { background: rgba(255,255,255,0.15); color: #fff; }
   .pull-indicator {
@@ -229,9 +230,9 @@
   .pause-btn {
     background: rgba(255,255,255,0.06); border: 1px solid var(--card-border);
     color: var(--text-dim); border-radius: 8px;
-    font-size: 16px; cursor: pointer; padding: 6px 10px;
+    font-size: 30px; cursor: pointer; padding: 4px;
     transition: color 0.2s, background 0.2s; line-height: 1;
-    min-width: 38px; min-height: 38px;
+    width: 38px; height: 38px;
     display: flex; align-items: center; justify-content: center;
   }
   .pause-btn:active { background: rgba(255,255,255,0.12); }
@@ -421,7 +422,6 @@
       <div class="switcher-dropdown" id="switcherDropdown"></div>
     </div>
     <div class="status-dot" id="statusDot"></div>
-    <button class="header-btn lang-btn" id="langBtn" aria-label="Language"></button>
     <button class="header-btn" id="openSettings" aria-label="Settings">⚙</button>
   </div>
 </div>
@@ -571,7 +571,14 @@
     <h2 id="settingsTitle"></h2>
     <div class="conn-list" id="connList"></div>
     <button class="btn btn-primary" id="addNewConn"></button>
-    <button class="btn btn-secondary" id="closeSettings"></button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:16px;border-top:1px solid var(--card-border)">
+      <span id="langLabel" style="color:var(--text-dim);font-size:14px"></span>
+      <div style="display:flex;gap:6px" id="langButtons">
+        <button class="header-btn lang-btn" data-lang="cs">CZ</button>
+        <button class="header-btn lang-btn" data-lang="en">EN</button>
+      </div>
+    </div>
+    <button class="btn btn-secondary" id="closeSettings" style="margin-top:16px"></button>
   </div>
 </div>
 
@@ -701,6 +708,7 @@ const i18n = {
     deleteConfirm: 'Smazat „{name}"?',
     lastUpdate: 'Poslední aktualizace: --',
     manualRefresh: 'Obnovovat ručně',
+    language: 'Jazyk',
   },
   en: {
     disconnected: 'Not connected',
@@ -763,6 +771,7 @@ const i18n = {
     deleteConfirm: 'Delete "{name}"?',
     lastUpdate: 'Last update: --',
     manualRefresh: 'Refresh manually',
+    language: 'Language',
   }
 };
 
@@ -779,8 +788,9 @@ function t(key) { return (i18n[currentLang] && i18n[currentLang][key]) || (i18n.
 
 function applyLanguage() {
   document.documentElement.lang = currentLang;
-  document.getElementById('langBtn').textContent = currentLang === 'cs' ? 'EN' : 'CZ';
-  document.getElementById('langBtn').title = currentLang === 'cs' ? 'Switch to English' : 'Přepnout do češtiny';
+  document.querySelectorAll('#langButtons .lang-btn').forEach(btn => {
+    btn.style.opacity = btn.dataset.lang === currentLang ? '1' : '0.4';
+  });
 
   // Error banner
   document.getElementById('errorTitle').textContent = t('errorTitle');
@@ -832,6 +842,7 @@ function applyLanguage() {
   // Settings modal
   document.getElementById('settingsTitle').textContent = t('inverters');
   document.getElementById('addNewConn').textContent = t('addInverter');
+  document.getElementById('langLabel').textContent = t('language');
   document.getElementById('closeSettings').textContent = t('close');
 
   // Edit modal
@@ -868,13 +879,13 @@ function applyLanguage() {
   if (lastData) updateUI(lastData);
 }
 
-function toggleLanguage() {
-  currentLang = currentLang === 'cs' ? 'en' : 'cs';
-  try { localStorage.setItem(LANG_KEY, currentLang); } catch(e) {}
-  applyLanguage();
-}
-
-document.getElementById('langBtn').addEventListener('click', toggleLanguage);
+document.querySelectorAll('#langButtons .lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentLang = btn.dataset.lang;
+    try { localStorage.setItem(LANG_KEY, currentLang); } catch(e) {}
+    applyLanguage();
+  });
+});
 
 // ═══════════════════════════════════════════
 //  Multi-connection config in localStorage
