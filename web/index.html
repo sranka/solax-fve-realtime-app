@@ -389,39 +389,6 @@
   }
   .conn-empty-icon { font-size: 32px; margin-bottom: 8px; }
 
-  /* ─── Switcher ─── */
-  .switcher-wrap { position: relative; }
-  .switcher-btn {
-    background: var(--card); border: 1px solid var(--card-border);
-    border-radius: 8px; padding: 4px 10px 4px 8px;
-    color: var(--text); font-size: 12px; font-weight: 600;
-    cursor: pointer; display: flex; align-items: center; gap: 5px;
-    max-width: 150px; font-family: 'DM Sans', sans-serif;
-    transition: border-color 0.2s;
-  }
-  .switcher-btn:hover { border-color: var(--accent); }
-  .switcher-btn .arrow { font-size: 10px; color: var(--text-dim); }
-  .switcher-btn .sname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .switcher-dropdown {
-    position: absolute; top: calc(100% + 6px); right: 0;
-    min-width: 200px; background: var(--bg2); border: 1px solid var(--card-border);
-    border-radius: 12px; padding: 6px; z-index: 110;
-    display: none; box-shadow: 0 12px 32px rgba(0,0,0,0.5);
-  }
-  .switcher-dropdown.open { display: block; }
-  .switcher-option {
-    display: block; width: 100%; text-align: left;
-    padding: 10px 12px; background: none; border: none;
-    color: var(--text); font-size: 13px; font-weight: 500;
-    cursor: pointer; border-radius: 8px; transition: background 0.15s;
-    font-family: 'DM Sans', sans-serif;
-  }
-  .switcher-option:hover { background: rgba(255,255,255,0.06); }
-  .switcher-option.active { background: rgba(56,189,248,0.12); color: var(--accent); }
-  .switcher-option-host {
-    font-size: 11px; color: var(--text-dim);
-    font-family: 'JetBrains Mono', monospace;
-  }
 
   /* ─── Toast ─── */
   .toast {
@@ -473,13 +440,6 @@
     </div>
   </div>
   <div class="header-right">
-    <div class="switcher-wrap" id="switcherWrap" style="display:none">
-      <button class="switcher-btn" id="switcherBtn">
-        <span class="sname" id="switcherName">—</span>
-        <span class="arrow">▼</span>
-      </button>
-      <div class="switcher-dropdown" id="switcherDropdown"></div>
-    </div>
     <button class="header-btn pause-btn" id="pauseBtn" aria-label="Pause">⏸</button>
     <button class="header-btn refresh-btn" id="refreshBtn" aria-label="Refresh"><span class="refresh-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.636-6.364"/><polyline points="21 2 21 8 15 8"/></svg></span></button>
     <button class="header-btn" id="openSettings" aria-label="Settings">⚙</button>
@@ -1244,34 +1204,9 @@ function updatePauseBtn(){
 
 function switchTo(id){
   activeId=id; setActiveId(id);
-  updateSwitcher(); startPolling();
+  startPolling();
 }
 
-// ═══════════════════════════════════════════
-//  Switcher
-// ═══════════════════════════════════════════
-function updateSwitcher() {
-  const w=document.getElementById('switcherWrap');
-  if(connections.length<=1){ w.style.display='none'; return; }
-  w.style.display='';
-  const cfg=getActiveConfig();
-  document.getElementById('switcherName').textContent=cfg?cfg.name:'—';
-  const dd=document.getElementById('switcherDropdown');
-  dd.innerHTML='';
-  connections.forEach(c=>{
-    const b=document.createElement('button');
-    b.className='switcher-option'+(c.id===activeId?' active':'');
-    b.innerHTML=`<div>${esc(c.name)}</div><div class="switcher-option-host">${esc(c.host)}</div>`;
-    b.addEventListener('click',()=>{switchTo(c.id);dd.classList.remove('open');});
-    dd.appendChild(b);
-  });
-}
-
-document.getElementById('switcherBtn').addEventListener('click',e=>{
-  e.stopPropagation();
-  document.getElementById('switcherDropdown').classList.toggle('open');
-});
-document.addEventListener('click',()=>document.getElementById('switcherDropdown').classList.remove('open'));
 
 // ═══════════════════════════════════════════
 //  Settings Modal — List
@@ -1369,7 +1304,6 @@ document.getElementById('saveConn').addEventListener('click',async()=>{
   await saveConnections(connections);
   closeEditModal();
   renderConnList();
-  updateSwitcher();
 
   if(editingId===activeId||connections.length===1) startPolling();
   showToast(t('saved'),'success');
@@ -1398,7 +1332,7 @@ document.getElementById('confirmYes').addEventListener('click',async()=>{
       setActiveId(activeId||'');
       startPolling();
     }
-    renderConnList();updateSwitcher();
+    renderConnList();
     showToast(t('deleted'),'success');
   }
   document.getElementById('confirmOverlay').classList.remove('open');pendingDeleteId=null;
@@ -1424,7 +1358,6 @@ function esc(s){const d=document.createElement('div');d.textContent=s;return d.i
 (async()=>{
   connections = await loadConnections();
   applyLanguage();
-  updateSwitcher();
   startPolling();
 })();
 
