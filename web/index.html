@@ -964,23 +964,6 @@ function saveConnections(list) { try { localStorage.setItem(STORAGE_KEY, JSON.st
 function getActiveId() { try { return localStorage.getItem(ACTIVE_KEY) || null; } catch(e) { return null; } }
 function setActiveId(id) { try { localStorage.setItem(ACTIVE_KEY, id || ''); } catch(e) {} }
 
-// Migrate old single-config format
-(function() {
-  try {
-    const old = localStorage.getItem('solax_fve_config');
-    if (!old) return;
-    const c = JSON.parse(old);
-    if (!c.host) return;
-    const list = loadConnections();
-    if (list.length > 0) return;
-    const id = generateId();
-    list.push({ id, name: c.host, host: c.host, password: c.password,
-      protocol: c.protocol||'http', interval: c.interval||10, forwardedFor: c.forwardedFor||'' });
-    saveConnections(list);
-    setActiveId(id);
-    localStorage.removeItem('solax_fve_config');
-  } catch(e) {}
-})();
 
 let connections = loadConnections();
 let activeId = getActiveId();
