@@ -213,15 +213,52 @@ function modbusToHttpData(regs1, regs2, regs3) {
 
   // BatteryRemainingEnergy: Modbus uint32 Wh → d[106] in 0.1 kWh units
   // d[106]/10 = kWh, so d[106] = Wh / 100
-  const battRemWh = ((r1(0x0026) << 16) | r1(0x0027)) >>> 0;
+  // Solax 32-bit: low word first (0x0026), high word second (0x0027)
+  const battRemWh = r1(0x0026) + 65536 * r1(0x0027);
   d[106] = Math.round(battRemWh / 100);
 
   // BatteryVoltage: Modbus reg/10 → V, HTTP r32u(d[169],d[170])/100 → V
-  // So d[170] = modbusReg * 10 (fits in 16 bits)
-  d[169] = 0;
-  d[170] = r1(0x0014) * 10;
+  // r32u(a,b) = a + 65536*b, so a=low word, b=high word
+  d[169] = r1(0x0014) * 10;
+  d[170] = 0;
 
   return d;
+}
+
+// --- Data-to-values conversion (mirrors index.html parseData) ---
+
+function r16s(n) { return n < 32768 ? n : n - 65536; }
+function r32u(a, b) { return a + 65536 * b; }
+function r32s(a, b) { return a < 32768 ? a + 65536 * b : a + 65536 * b - 4294967296; }
+function readRunMode(m) {
+  return ['Waiting', 'Checking', 'Normal', 'Fault', 'Permanent Fault',
+    'Updating', 'EPS Check', 'EPS Mode', 'Self Test', 'Idle', 'Standby'][m] || String(m);
+}
+
+function dataToValues(d) {
+  const r = {
+    Yield_Today: d[70] / 10, Yield_Total: r32u(d[68], d[69]) / 10,
+    PowerDc1: d[14], PowerDc2: d[15], BAT_Power: r16s(d[41]),
+    feedInPower: r32s(d[34], d[35]),
+    GridAPower: r16s(d[6]), GridBPower: r16s(d[7]), GridCPower: r16s(d[8]),
+    FeedInEnergy: r32u(d[86], d[87]) / 100, ConsumeEnergy: r32u(d[88], d[89]) / 100,
+    RunMode: readRunMode(d[19]),
+    EPSAPower: r16s(d[29]), EPSBPower: r16s(d[30]), EPSCPower: r16s(d[31]),
+    Vdc1: d[10] / 10, Vdc2: d[11] / 10, Idc1: d[12] / 10, Idc2: d[13] / 10,
+    EPSAVoltage: d[23] / 10, EPSBVoltage: d[24] / 10, EPSCVoltage: d[25] / 10,
+    EPSACurrent: r16s(d[26]) / 10, EPSBCurrent: r16s(d[27]) / 10, EPSCCurrent: r16s(d[28]) / 10,
+    BatteryCapacity: d[103], BatteryVoltage: r32u(d[169], d[170]) / 100, BatteryRemainingEnergy: d[106] / 10,
+    BatteryTemperature: r16s(d[105]),
+    GridAVoltage: d[0] / 10, GridBVoltage: d[1] / 10, GridCVoltage: d[2] / 10,
+    GridACurrent: r16s(d[3]) / 10, GridBCurrent: r16s(d[4]) / 10, GridCCurrent: r16s(d[5]) / 10,
+    FreqacA: d[16] / 100, FreqacB: d[17] / 100, FreqacC: d[18] / 100,
+  };
+  r.GridPower = r.GridAPower + r.GridBPower + r.GridCPower;
+  r.SolarPower = r.PowerDc1 + r.PowerDc2;
+  r.HomePower = r.SolarPower - r.BAT_Power - r.feedInPower;
+  if (r.HomePower < 0) r.HomePower = 0;
+  r.EPSTotal = r.EPSAPower + r.EPSBPower + r.EPSCPower;
+  return r;
 }
 
 // --- Route handlers ---
@@ -318,6 +355,7 @@ async function handleModbus(req, res) {
       ver: '3.006.04',
       Data: data,
       Information: [0, 0, 0, 0, 0, 0, 0, 0, 'MODBUS'],
+      Values: dataToValues(data),
     };
 
     res.writeHead(200, {
