@@ -312,6 +312,7 @@ async function handleModbus(req, res) {
 
     const data = modbusToHttpData(regs1, regs2, regs3);
     const result = {
+      creator: 'modbus-proxy:1.0',
       type: 'X3-Hybrid G4',
       sn: 'MODBUS',
       ver: '3.006.04',
