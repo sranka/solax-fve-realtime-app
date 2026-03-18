@@ -4,7 +4,7 @@ const path = require('path');
 
 const PORT = parseInt(process.env.PORT || '8080', 10);
 const PROXY_TARGET = process.env.DEV_PROXY_TARGET || '';
-const WEB_DIR = path.join(__dirname, 'web');
+const WEB_DIR = path.join(__dirname, '..', 'web');
 
 const MIME_TYPES = {
   '.html': 'text/html',
