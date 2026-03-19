@@ -1,6 +1,6 @@
 # Solax FVE Monitor
 
-Real-time monitoring app for Solax solar inverters, tested with **Solax X3 Hybrid G4** with **WiFi 3.0 dongle**. Connects directly to the inverter's local API (modbus TCP or HTTP) within your home network and displays live power data, battery status, grid details, and energy statistics.
+Real-time monitoring app for Solax solar inverters, tested with **Solax X3 Hybrid G4** with **Pocket WiFi dongle**. Connects directly to the inverter's local API (modbus TCP or HTTP) within your home network and displays live power data, battery status, grid details, and energy statistics.
 
 ## Features
 
@@ -28,12 +28,11 @@ Real-time monitoring app for Solax solar inverters, tested with **Solax X3 Hybri
 PROXY_TARGET=http://192.168.199.192 pnpm start
 ```
 
-Starts a Node.js HTTP server at [http://localhost:8080](http://localhost:8080) that serves the web app and proxies all POST requests to the inverter specified by `PROXY_TARGET`. This avoids CORS/mixed-content issues without any special browser flags. Without `PROXY_TARGET`, it serves static files only.
+Starts a Node.js HTTP server at [http://localhost:8080](http://localhost:8080) that serves the web app and proxies HTTP POST requests to the inverter specified by `PROXY_TARGET`. This avoids CORS/mixed-content issues without any special browser flags.
 
-The server also acts as an HTTP proxy to Solax Modbus TCP. Set `MODBUS=1` to make Modbus the default for POST requests (the Modbus host is derived from `PROXY_TARGET`). Both `/http` and `/modbus` endpoints are additional available for side-by-side comparison.
+The server also acts as an HTTP proxy to Solax Modbus TCP. Set `MODBUS=1` to make Modbus the default for POST requests (the Modbus host is derived from `PROXY_TARGET`). Both `/http` and `/modbus` endpoints are also available for side-by-side comparison.
 
-Assuming that you open web application in the browser at http://localhost:8080, the app's connection settings set the inverter hostname to `localhost:8080/http` to communicate using Solax HTTP API, `localhost:8080/modbus` to communicate using Solax modbus TCP, or `localhost:8080`to use a protocol that the server was started with depending on MODBUS env variable.
-
+Assuming that you open the web application in the browser at http://localhost:8080, set the inverter hostname in the app's connection settings to `localhost:8080/http` to communicate using Solax HTTP API, `localhost:8080/modbus` to communicate using Solax modbus TCP, or `localhost:8080` to use a protocol that the server prefers depending on the `MODBUS=1` environment variable.
 
 ```bash
 # HTTP proxy by default:
@@ -45,7 +44,7 @@ MODBUS=1 PROXY_TARGET=http://192.168.199.192 pnpm start
 
 ## Android App
 
-The project uses [Capacitor](https://capacitorjs.com/) to wrap the web app into a native Android application. This removes the HTTPS/mixed-content restriction — the app can freely connect to inverters over HTTP on the local network.
+The project uses [Capacitor](https://capacitorjs.com/) to wrap the web app into a native Android application. This removes the HTTPS/mixed-content restriction — the app can freely connect to inverters over Solax Modbus TCP or to Solax local HTTP API on the local network.
 
 ### Prerequisites
 
@@ -92,7 +91,7 @@ Then open `http://<your-computer-ip>:8080/app-debug.apk` on your phone.
 
 ## iOS App
 
-The project also uses [Capacitor](https://capacitorjs.com/) to wrap the web app into a native iOS application. Like the Android version, this removes the HTTPS/mixed-content restriction — the app can freely connect to inverters over HTTP on the local network.
+The project also uses [Capacitor](https://capacitorjs.com/) to wrap the web app into a native iOS application. Like the Android version, this removes the HTTPS/mixed-content restriction — the app can freely connect to inverters over Solax Modbus TCP or to Solax local HTTP API on the local network.
 
 ### Prerequisites
 
