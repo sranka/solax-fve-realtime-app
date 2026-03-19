@@ -185,7 +185,7 @@ This rule blocks all POST requests to your Solax domain unless they originate fr
 ### Dynamic IP considerations
 
 If your home IP changes frequently, consider:
-- Using a Cloudflare Access policy with email-based authentication instead of IP filtering
+- Enhance the IP filtering rule to bypass when secret is present in the URL fragment, a WAF blocking rule such as `(not ip.src in $allowed_ip_addresses and ends_with(http.request.full_uri, "#MY_TOP_SECRET"))` together with a connection setting in the application that adds `#MY_TOP_SECRET` to hostname does the trick
 - Setting up a script that updates the WAF rule when your IP changes via the [Cloudflare API](https://developers.cloudflare.com/api/)
 
 ## 6. Maintenance
