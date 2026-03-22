@@ -180,7 +180,7 @@ function modbusToHttpData(regs, startAddr) {
 
   // RunMode
   d[19] = r(0x0009);
-
+  
   // EPS / Off-grid
   d[23] = r(0x0076);  // EPSAVoltage
   d[24] = r(0x007A);  // EPSBVoltage
@@ -203,6 +203,10 @@ function modbusToHttpData(regs, startAddr) {
   d[68] = r(0x0052);  // Etotal_togrid low word
   d[69] = r(0x0053);  // Etotal_togrid high word
   d[70] = r(0x0050);  // Etoday_togrid
+
+  // Battery charge/discharge power
+  d[78] = r(0x0020);  // BatteryOutputPower (discharge, W)
+  d[79] = r(0x0023);  // BatteryInputPower (charge, W)
 
   // Feed-in / consume energy totals — 32-bit unsigned
   d[86] = r(0x0048);  // FeedInEnergy low
@@ -259,6 +263,8 @@ function dataToValues(d) {
     GridAVoltage: d[0] / 10, GridBVoltage: d[1] / 10, GridCVoltage: d[2] / 10,
     GridACurrent: r16s(d[3]) / 10, GridBCurrent: r16s(d[4]) / 10, GridCCurrent: r16s(d[5]) / 10,
     FreqacA: d[16] / 100, FreqacB: d[17] / 100, FreqacC: d[18] / 100,
+    FeedInEnergyToday:r32u(d[90],d[91])/100, ConsumeEnergyToday:r32u(d[92],d[93])/100,
+    BatteryOutputToday:d[78]/10,BatteryInputToday:d[79]/10,
   };
   r.GridPower = r.GridAPower + r.GridBPower + r.GridCPower;
   r.SolarPower = r.PowerDc1 + r.PowerDc2;

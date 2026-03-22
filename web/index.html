@@ -549,6 +549,10 @@
 
     <div class="status-row">
       <div class="status-chip">
+        <div class="status-chip-label" id="chipLabelBatCharged"></div>
+        <div class="status-chip-value" id="chipBatChargedVal" style="color:var(--battery-charge)">-- kWh</div>
+        <div class="status-chip-label" id="chipLabelBatDischarged" style="margin-top:4px"></div>
+        <div class="status-chip-value" id="chipBatDischargedVal" style="color:var(--battery-discharge)">-- kWh</div>
       </div>
       <div class="status-chip">
         <div class="status-chip-label" id="chipLabelMode"></div>
@@ -756,6 +760,8 @@ const i18n = {
     fromGrid: 'Ze sítě',
     gridTodayFeedIn: 'Dnes do sítě',
     gridTodayConsumed: 'Dnes ze sítě',
+    todayCharged: 'Dnes nabito',
+    todayDischarged: 'Dnes vybito',
     solarYield: 'Solární výroba',
     pause: 'Pozastavit',
     resume: 'Pokračovat',
@@ -828,6 +834,8 @@ const i18n = {
     fromGrid: 'From grid',
     gridTodayFeedIn: 'Today to grid',
     gridTodayConsumed: 'Today from grid',
+    todayCharged: 'Today charged',
+    todayDischarged: 'Today discharged',
     solarYield: 'Solar yield',
     pause: 'Pause',
     resume: 'Resume',
@@ -910,6 +918,8 @@ function applyLanguage() {
   document.getElementById('chipLabelYieldToday').textContent = t('yieldToday');
   document.getElementById('chipLabelFeedIn').textContent = t('gridTodayFeedIn');
   document.getElementById('chipLabelConsume').textContent = t('gridTodayConsumed');
+  document.getElementById('chipLabelBatCharged').textContent = t('todayCharged');
+  document.getElementById('chipLabelBatDischarged').textContent = t('todayDischarged');
 
   // Card titles
   document.getElementById('cardTitleSolar').textContent = t('solarPanels');
@@ -1099,6 +1109,7 @@ function formatData(d) {
     GridACurrent:r16s(d[3])/10, GridBCurrent:r16s(d[4])/10, GridCCurrent:r16s(d[5])/10,
     FreqacA:d[16]/100, FreqacB:d[17]/100, FreqacC:d[18]/100,
     FeedInEnergyToday:r32u(d[90],d[91])/100, ConsumeEnergyToday:r32u(d[92],d[93])/100,
+    BatteryOutputToday:d[78]/10,BatteryInputToday:d[79]/10,
   };
   r.GridPower=r.GridAPower+r.GridBPower+r.GridCPower;
   r.SolarPower=r.PowerDc1+r.PowerDc2;
@@ -1129,6 +1140,7 @@ function formatModbusData(regs, startAddr) {
     GridACurrent:r16s(g(0x006B))/10, GridBCurrent:r16s(g(0x006F))/10, GridCCurrent:r16s(g(0x0073))/10,
     FreqacA:g(0x006D)/100, FreqacB:g(0x0071)/100, FreqacC:g(0x0075)/100,
     FeedInEnergyToday:(g(0x0098)+65536*g(0x0099))/100, ConsumeEnergyToday:(g(0x009A)+65536*g(0x009B))/100,
+    BatteryOutputToday:g(0x0020)/10, BatteryInputToday:g(0x0023)/10,
   };
   r.GridPower=r.GridAPower+r.GridBPower+r.GridCPower;
   r.SolarPower=r.PowerDc1+r.PowerDc2;
@@ -1251,6 +1263,8 @@ function updateUI(d) {
   $('yieldToday').textContent=d.Yield_Today.toFixed(1)+' kWh';
   $('chipFeedInVal').textContent=d.FeedInEnergyToday.toFixed(1)+' kWh';
   $('chipConsumeVal').textContent=d.ConsumeEnergyToday.toFixed(1)+' kWh';
+  $('chipBatChargedVal').textContent=d.BatteryInputToday.toFixed(1)+' kWh';
+  $('chipBatDischargedVal').textContent=d.BatteryOutputToday.toFixed(1)+' kWh';
   $('feedInEnergy').textContent=d.FeedInEnergy.toFixed(1);
   $('consumeEnergy').textContent=d.ConsumeEnergy.toFixed(1);
   $('solarYield').textContent=d.Yield_Total.toFixed(1);
