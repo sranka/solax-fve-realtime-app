@@ -209,6 +209,10 @@ function modbusToHttpData(regs, startAddr) {
   d[87] = r(0x0049);  // FeedInEnergy high
   d[88] = r(0x004A);  // ConsumeEnergy low
   d[89] = r(0x004B);  // ConsumeEnergy high
+  d[90] = r(0x0098);  // ConsumeEnergy high
+  d[91] = r(0x0099);  // ConsumeEnergy high
+  d[92] = r(0x009A);  // ConsumeEnergy high
+  d[93] = r(0x009B);  // ConsumeEnergy high
 
   // Battery state
   d[103] = r(0x001C); // BatteryCapacity (%)
@@ -345,7 +349,7 @@ async function handleModbus(req, res) {
     const fc = 0x04;
 
     // Read 0x0003–0x0096 (148 registers), auto-split into chunks
-    const regs = await modbusReadRegisters(host, port, unitId, fc, 0x0003, 0x0096);
+    const regs = await modbusReadRegisters(host, port, unitId, fc, 0x0003, 0x009B);
 
     const data = modbusToHttpData(regs, 0x0003);
     const result = {

@@ -557,8 +557,10 @@
         <div class="status-chip-value" id="yieldToday" style="color:var(--solar)">-- kWh</div>
       </div>
       <div class="status-chip">
-        <div class="status-chip-label" id="chipLabelTotal"></div>
-        <div class="status-chip-value" id="yieldTotal" style="color:var(--text-dim)">-- MWh</div>
+        <div class="status-chip-label" id="chipLabelFeedIn"></div>
+        <div class="status-chip-value" id="chipFeedInVal" style="color:var(--grid-neg)">-- kWh</div>
+        <div class="status-chip-label" id="chipLabelConsume" style="margin-top:4px"></div>
+        <div class="status-chip-value" id="chipConsumeVal" style="color:var(--grid-pos)">-- kWh</div>
       </div>
     </div>
     </div><!-- /.dashboard-col (left) -->
@@ -752,6 +754,8 @@ const i18n = {
     totalEnergy: 'Energie celkem',
     toGrid: 'Do sítě',
     fromGrid: 'Ze sítě',
+    gridTodayFeedIn: 'Dnes do sítě',
+    gridTodayConsumed: 'Dnes ze sítě',
     solarYield: 'Solární výroba',
     pause: 'Pozastavit',
     resume: 'Pokračovat',
@@ -822,6 +826,8 @@ const i18n = {
     totalEnergy: 'Total energy',
     toGrid: 'To grid',
     fromGrid: 'From grid',
+    gridTodayFeedIn: 'Today to grid',
+    gridTodayConsumed: 'Today from grid',
     solarYield: 'Solar yield',
     pause: 'Pause',
     resume: 'Resume',
@@ -902,7 +908,8 @@ function applyLanguage() {
   // Status row
   document.getElementById('chipLabelMode').textContent = t('mode');
   document.getElementById('chipLabelYieldToday').textContent = t('yieldToday');
-  document.getElementById('chipLabelTotal').textContent = t('total');
+  document.getElementById('chipLabelFeedIn').textContent = t('gridTodayFeedIn');
+  document.getElementById('chipLabelConsume').textContent = t('gridTodayConsumed');
 
   // Card titles
   document.getElementById('cardTitleSolar').textContent = t('solarPanels');
@@ -1091,7 +1098,7 @@ function formatData(d) {
     GridAVoltage:d[0]/10, GridBVoltage:d[1]/10, GridCVoltage:d[2]/10,
     GridACurrent:r16s(d[3])/10, GridBCurrent:r16s(d[4])/10, GridCCurrent:r16s(d[5])/10,
     FreqacA:d[16]/100, FreqacB:d[17]/100, FreqacC:d[18]/100,
-    FeedInEnergyToday:r32u(d[92],d[93])*10, ConsumeEnergyToday:r32u(d[90],d[91])/10,
+    FeedInEnergyToday:r32u(d[90],d[91])/100, ConsumeEnergyToday:r32u(d[92],d[93])/100,
   };
   r.GridPower=r.GridAPower+r.GridBPower+r.GridCPower;
   r.SolarPower=r.PowerDc1+r.PowerDc2;
@@ -1121,7 +1128,7 @@ function formatModbusData(regs, startAddr) {
     GridAVoltage:g(0x006A)/10, GridBVoltage:g(0x006E)/10, GridCVoltage:g(0x0072)/10,
     GridACurrent:r16s(g(0x006B))/10, GridBCurrent:r16s(g(0x006F))/10, GridCCurrent:r16s(g(0x0073))/10,
     FreqacA:g(0x006D)/100, FreqacB:g(0x0071)/100, FreqacC:g(0x0075)/100,
-    FeedInEnergyToday:(g(0x0098)+65536*g(0x0099))*10, ConsumeEnergyToday:(g(0x009A)+65536*g(0x009B))*10,
+    FeedInEnergyToday:(g(0x0098)+65536*g(0x0099))/100, ConsumeEnergyToday:(g(0x009A)+65536*g(0x009B))/100,
   };
   r.GridPower=r.GridAPower+r.GridBPower+r.GridCPower;
   r.SolarPower=r.PowerDc1+r.PowerDc2;
@@ -1242,8 +1249,8 @@ function updateUI(d) {
   mE.className='status-chip-value mode-'+(d.RunMode==='Normal'?'normal':d.RunMode.includes('EPS')?'eps':d.RunMode.includes('Fault')?'fault':'idle');
 
   $('yieldToday').textContent=d.Yield_Today.toFixed(1)+' kWh';
-  const tk=d.Yield_Total;
-  $('yieldTotal').textContent=tk>=1000?(tk/1000).toFixed(2)+' MWh':tk.toFixed(0)+' kWh';
+  $('chipFeedInVal').textContent=d.FeedInEnergyToday.toFixed(1)+' kWh';
+  $('chipConsumeVal').textContent=d.ConsumeEnergyToday.toFixed(1)+' kWh';
   $('feedInEnergy').textContent=d.FeedInEnergy.toFixed(1);
   $('consumeEnergy').textContent=d.ConsumeEnergy.toFixed(1);
   $('solarYield').textContent=d.Yield_Total.toFixed(1);
