@@ -8,6 +8,8 @@ const PROXY_TARGET = process.env.PROXY_TARGET || '';
 const MODBUS_TARGET = process.env.MODBUS_TARGET || '';
 const MODBUS_DEFAULT = process.env.MODBUS === '1';
 const MODBUS_DEBUG = !!process.env.MODBUS_DEBUG;
+const CORS_ORIGIN = process.env.CORS_ORIGIN === undefined ? '*' : process.env.CORS_ORIGIN;
+const CORS_HEADERS = process.env.CORS_HEADERS === undefined ? '*' : process.env.CORS_HEADERS;
 const WEB_DIR = path.join(__dirname, '..', 'web');
 
 const MIME_TYPES = {
@@ -323,8 +325,7 @@ function handleHttpProxy(req, res) {
     };
 
     const proxyReq = http.request(options, proxyRes => {
-      const responseHeaders = { ...proxyRes.headers };
-      responseHeaders['access-control-allow-origin'] = '*';
+      const responseHeaders = { ...proxyRes.headers, ...corsHeaders() };
       res.writeHead(proxyRes.statusCode, responseHeaders);
       proxyRes.pipe(res);
     });
@@ -359,7 +360,7 @@ async function handleModbus(req, res) {
     if (modbusCache.data && now - modbusCache.time < MODBUS_MIN_INTERVAL) {
       res.writeHead(200, {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        ...corsHeaders(),
       });
       res.end(modbusCache.data);
       return;
@@ -395,7 +396,7 @@ async function handleModbus(req, res) {
 
     res.writeHead(200, {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
+      ...corsHeaders(),
     });
     res.end(json);
   } catch (err) {
@@ -436,7 +437,7 @@ async function handleModbusRead(req, res, addrHex) {
 
     res.writeHead(200, {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
+      ...corsHeaders(),
     });
     res.end(JSON.stringify(result, null, 2));
   } catch (err) {
@@ -445,10 +446,45 @@ async function handleModbusRead(req, res, addrHex) {
   }
 }
 
+// --- CORS helpers ---
+
+function corsHeaders() {
+  if (!CORS_ORIGIN) return {};
+  const headers = { 'Access-Control-Allow-Origin': CORS_ORIGIN };
+  if (CORS_HEADERS) headers['Access-Control-Allow-Headers'] = CORS_HEADERS;
+  return headers;
+}
+
+function corsPreflightHeaders(req) {
+  if (!CORS_ORIGIN) return null;
+  const headers = {
+    'Access-Control-Allow-Origin': CORS_ORIGIN,
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Max-Age': '86400',
+  };
+  if (CORS_HEADERS) {
+    headers['Access-Control-Allow-Headers'] = CORS_HEADERS;
+  } else if (req.headers['access-control-request-headers']) {
+    headers['Access-Control-Allow-Headers'] = req.headers['access-control-request-headers'];
+  }
+  return headers;
+}
+
 // --- Server ---
 
 const server = http.createServer((req, res) => {
   const url = req.url.split('?')[0];
+
+  if (req.method === 'OPTIONS') {
+    const preflight = corsPreflightHeaders(req);
+    if (preflight) {
+      res.writeHead(204, preflight);
+    } else {
+      res.writeHead(204);
+    }
+    res.end();
+    return;
+  }
 
   if (req.method === 'POST') {
     if (url === '/http') {

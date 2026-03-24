@@ -61,6 +61,12 @@ PROXY_TARGET=http://192.168.199.192
 
 # Set MODBUS=1 to use Modbus TCP as the default protocol for POST /
 MODBUS=1
+
+# CORS — uncomment to restrict cross-origin requests from browsers
+# CORS_ORIGIN sets the Access-Control-Allow-Origin header value (e.g. * or https://example.com)
+# CORS_HEADERS sets the Access-Control-Allow-Headers header value (e.g. Content-Type,Authorization)
+# CORS_ORIGIN=*
+# CORS_HEADERS=Content-Type,CF-Access-Client-Id,CF-Access-Client-Secret
 EOF
   info "IMPORTANT: Edit $ENV_FILE to match your inverter IP address."
 else

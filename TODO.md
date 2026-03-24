@@ -1,2 +1,3 @@
-- visualize/show total day from/to baterry/grid/FVE/consumption
+- provide instruction of how to host a web application on cloudflare with CORS
+- test it on TVs, make it PWA?
 
