@@ -509,7 +509,9 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Dev server: http://localhost:${PORT}`);
+  console.log(`Server: http://localhost:${PORT}`);
+  console.log(`  CORS_ORIGIN=${CORS_ORIGIN}`);
+  console.log(`  CORS_HEADERS=${CORS_HEADERS}`);
   if (PROXY_TARGET) {
     console.log(`  POST /http → proxy to ${PROXY_TARGET}`);
   }
