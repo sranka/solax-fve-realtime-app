@@ -1,3 +1,4 @@
+- UX with settings menu on wide-screens
 - provide instruction of how to host a web application on cloudflare with CORS
-- test it on TVs, make it PWA?
+- make it work on android TVs (settings inaccessible), better TV usability, make it PWA for phone
 - allow better protection using HTTP headers with a cloudflare example
