@@ -280,7 +280,8 @@ function dataToValues(d, regs) {
 // --- Route handlers ---
 
 function serveStatic(req, res) {
-  let filePath = path.join(WEB_DIR, req.url === '/' ? 'index.html' : req.url);
+  const reqPath = new URL(req.url, 'http://localhost').pathname;
+  let filePath = path.join(WEB_DIR, reqPath === '/' ? 'index.html' : reqPath);
   filePath = path.normalize(filePath);
   if (!filePath.startsWith(WEB_DIR)) {
     res.writeHead(403);
