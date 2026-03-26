@@ -405,6 +405,7 @@
     font-size: 14px; outline: none; transition: border-color 0.2s;
   }
   .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+  .form-group input:focus-visible, .form-group select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .form-hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
   .form-group textarea {
     width: 100%; padding: 12px 14px; background: var(--card);
@@ -414,6 +415,7 @@
     resize: vertical; line-height: 1.5;
   }
   .form-group textarea:focus { border-color: var(--accent); }
+  .form-group textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .advanced-toggle {
     font-size: 13px; color: var(--text-dim); cursor: pointer;
     padding: 8px 0; user-select: none;
@@ -506,6 +508,14 @@
   .confirm-box p { margin-bottom: 20px; font-size: 14px; }
   .confirm-box .confirm-actions { display: flex; gap: 8px; }
   .confirm-box .confirm-actions .btn { flex: 1; margin: 0; }
+
+  /* ─── Focus-visible for D-pad / keyboard navigation ─── */
+  .btn:focus-visible, .header-btn:focus-visible, .conn-action-btn:focus-visible,
+  .conn-item-info:focus-visible, .theme-btn:focus-visible, .lang-btn:focus-visible,
+  .advanced-toggle:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25);
+  }
 </style>
 </head>
 <body>
@@ -513,7 +523,7 @@
 <!-- Header -->
 <div class="header">
   <div class="header-left">
-    <div class="logo-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <div class="logo-icon" tabindex="0" role="button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#f59e0b"/>
@@ -778,7 +788,7 @@
       <div class="form-group form-check">
         <label><span id="labelManualRefresh"></span> <input type="checkbox" id="cfgManualRefresh"></label>
       </div>
-      <div class="advanced-toggle" id="advancedToggle">
+      <div class="advanced-toggle" id="advancedToggle" tabindex="0" role="button">
         <span class="advanced-chevron" id="advancedChevron">▶</span> <span id="labelAdvanced"></span>
       </div>
       <div class="advanced-section" id="advancedSection" style="display:none">
@@ -1492,15 +1502,68 @@ function switchTo(id){
   startPolling();
 }
 
+// ═══════════════════════════════════════════
+//  Focus Management (Android TV / keyboard)
+// ═══════════════════════════════════════════
+const _focusStack=[];
+
+function getFocusableElements(container){
+  return Array.from(container.querySelectorAll(
+    'button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex="0"]'
+  )).filter(el=>el.offsetParent!==null);
+}
+
+function trapFocus(modalEl,focusEl){
+  _focusStack.push({modal:modalEl,previousFocus:document.activeElement});
+  requestAnimationFrame(()=>{
+    const target=focusEl||getFocusableElements(modalEl)[0];
+    if(target) target.focus();
+  });
+}
+
+function releaseFocus(){
+  const entry=_focusStack.pop();
+  if(entry&&entry.previousFocus&&entry.previousFocus.focus) entry.previousFocus.focus();
+}
+
+document.addEventListener('keydown',function(e){
+  // Enter/Space on custom focusable elements
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches('[tabindex="0"]')){
+    e.preventDefault(); e.target.click(); return;
+  }
+  // Escape closes topmost modal
+  if(e.key==='Escape'&&_focusStack.length){
+    e.preventDefault();
+    const top=_focusStack[_focusStack.length-1];
+    if(top.modal.id==='confirmOverlay') closeConfirmDialog();
+    else if(top.modal.id==='editModal') closeEditModal();
+    else if(top.modal.id==='settingsModal') closeSettingsModal();
+    return;
+  }
+  // Tab trapping inside modal
+  if(e.key==='Tab'&&_focusStack.length){
+    const top=_focusStack[_focusStack.length-1];
+    const els=getFocusableElements(top.modal);
+    if(!els.length){e.preventDefault();return;}
+    const first=els[0],last=els[els.length-1];
+    if(e.shiftKey){
+      if(document.activeElement===first){e.preventDefault();last.focus();}
+    }else{
+      if(document.activeElement===last){e.preventDefault();first.focus();}
+    }
+  }
+});
 
 // ═══════════════════════════════════════════
 //  Settings Modal — List
 // ═══════════════════════════════════════════
 function openSettingsModal(){
   renderConnList();
-  document.getElementById('settingsModal').classList.add('open');
+  const modal=document.getElementById('settingsModal');
+  modal.classList.add('open');
+  trapFocus(modal);
 }
-function closeSettingsModal(){ document.getElementById('settingsModal').classList.remove('open'); }
+function closeSettingsModal(){ document.getElementById('settingsModal').classList.remove('open'); releaseFocus(); }
 
 function renderConnList(){
   const list=document.getElementById('connList');
@@ -1514,7 +1577,7 @@ function renderConnList(){
     const el=document.createElement('div');
     el.className='conn-item'+(c.id===activeId?' active':'');
     el.innerHTML=`
-      <div class="conn-item-info">
+      <div class="conn-item-info" tabindex="0" role="button">
         <div class="conn-item-name">${esc(c.name)}</div>
         <div class="conn-item-host">${esc(c.protocol)}://${esc(c.host)}</div>
       </div>
@@ -1583,9 +1646,11 @@ function openEditModal(id){
     else{$('advancedSection').style.display='none';$('advancedChevron').classList.remove('open');}
   }
   updateProtocolUI();
-  $('editModal').classList.add('open');
+  const modal=$('editModal');
+  modal.classList.add('open');
+  trapFocus(modal,$('cfgName'));
 }
-function closeEditModal(){ document.getElementById('editModal').classList.remove('open'); editingId=null; }
+function closeEditModal(){ document.getElementById('editModal').classList.remove('open'); editingId=null; releaseFocus(); }
 
 document.getElementById('addNewConn').addEventListener('click',()=>openEditModal(null));
 document.getElementById('cancelEdit').addEventListener('click',closeEditModal);
@@ -1658,12 +1723,13 @@ let pendingDeleteId=null;
 function confirmDelete(id,name){
   pendingDeleteId=id;
   document.getElementById('confirmMsg').textContent=t('deleteConfirm').replace('{name}',name);
-  document.getElementById('confirmOverlay').classList.add('open');
+  const overlay=document.getElementById('confirmOverlay');
+  overlay.classList.add('open');
+  trapFocus(overlay,document.getElementById('confirmNo'));
 }
+function closeConfirmDialog(){ document.getElementById('confirmOverlay').classList.remove('open'); pendingDeleteId=null; releaseFocus(); }
 
-document.getElementById('confirmNo').addEventListener('click',()=>{
-  document.getElementById('confirmOverlay').classList.remove('open');pendingDeleteId=null;
-});
+document.getElementById('confirmNo').addEventListener('click',closeConfirmDialog);
 document.getElementById('confirmYes').addEventListener('click',async()=>{
   if(pendingDeleteId){
     connections=connections.filter(c=>c.id!==pendingDeleteId);
@@ -1676,10 +1742,10 @@ document.getElementById('confirmYes').addEventListener('click',async()=>{
     renderConnList();
     showToast(t('deleted'),'success');
   }
-  document.getElementById('confirmOverlay').classList.remove('open');pendingDeleteId=null;
+  closeConfirmDialog();
 });
 document.getElementById('confirmOverlay').addEventListener('click',e=>{
-  if(e.target===e.currentTarget){e.currentTarget.classList.remove('open');pendingDeleteId=null;}
+  if(e.target===e.currentTarget) closeConfirmDialog();
 });
 
 // ═══════════════════════════════════════════
