@@ -1,2 +1,0 @@
-- don't show install-app button when it runs in the app
-- Hide advanced menu for modbus connections (applies only to HTTP/HTTPS)
