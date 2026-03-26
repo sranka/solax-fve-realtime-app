@@ -1,0 +1,12 @@
+{
+  "name": "Solax FVE Realtime",
+  "short_name": "Solax FVE",
+  "display": "standalone",
+  "start_url": "/",
+  "theme_color": "#0a0e1a",
+  "background_color": "#0a0e1a",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
