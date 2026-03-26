@@ -45,7 +45,7 @@ ssh $PI_HOST "sudo mkdir -p /opt/solax-fve && \
 
 ```bash
 sudo apt-get install -y git
-git clone https://github.com/sranka/solax-fve-realtime-app.git /tmp/solax-fve-src
+git clone https://github.com/sranka/solax-fve-live-app.git /tmp/solax-fve-src
 ```
 
 Then run the install script (see next section).
@@ -176,7 +176,7 @@ If your home IP changes frequently, consider:
 Copy new files and run the install script again — it preserves your `/etc/default/solax-fve` configuration:
 
 ```bash
-cd /path/to/solax-fve-realtime-app
+cd /path/to/solax-fve-live-app
 sudo bash scripts/service/rpi-install.sh
 ```
 

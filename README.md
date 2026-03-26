@@ -1,36 +1,45 @@
-# Solax FVE Monitor
+# Solax FVE Live Monitor
 
-Real-time monitoring app for Solax solar inverters, tested with **Solax X3 Hybrid G4** with **Pocket WiFi dongle**. Connects directly to the inverter's local API (modbus TCP or HTTP) within your home network and displays live power data, battery status, grid details, and energy statistics.
+Live monitoring app for Solax X3 Hybrid G4 inverters. Android Phone or TV connects directly to the inverter on your home network. A web application is provided for all other devices and to allow remote access to your inverter from the internet over HTTPS, also for the Android application.
 
-## Features
+<a href="docs/tablet-screenshot.png"><img src="docs/tablet-screenshot.png" height="300" alt="Solax FVE Monitor on Tablet"></a> <a href="docs/phone-screenshot.png"><img src="docs/phone-screenshot.png" height="300" alt="Solax FVE Monitor on Phone"></a>
 
+- Tested with **Solax X3 Hybrid G4**, **Pocket WiFi 3.0 dongle**
 - Live power flow visualization (Solar, Battery, Grid, Home consumption)
 - 3-phase grid details (voltage, current, power, frequency)
 - Battery status (SoC, voltage, temperature, charge/discharge)
 - EPS (backup power) monitoring
 - Energy totals (daily solar, battery, grid in/out; totals)
 - Multiple inverter support with quick switching
-- Works as a standalone Android/iOS app or a web app in the browser
-- Communicates over Solax modbus TCP or Solax HTTP API
+- Works as a standalone Android app (phone and also TV) or a web app in the browser
 - Dark and Light mode (dark by default)
 - Double tap to zoom, then zoom out on double tap or automatically after 8 seconds
+- Full screen support, show/hide top menu on app icon tap
+- Use TCP modbus from within the home network, HTTP for WiFi 3.0 dongle HTTP API, or HTTPS when connecting from outside to a proxy.
+- Instructions provided on how to install and host the web application and a proxy server as a [service on Raspberry Pi](./docs/remote-hosting-through-raspberry-pi.md)
 
-## Screenshots
+### Install on Android phone / TV
 
-<a href="docs/tablet-screenshot.png"><img src="docs/tablet-screenshot.png" width="400" alt="Solax FVE Monitor on Tablet"></a> <a href="docs/phone-screenshot.png"><img src="docs/phone-screenshot.png" width="130" alt="Solax FVE Monitor on Phone"></a>
+The easiest way to install the APK package on your phone without a USB cable is via [LocalSend](https://localsend.org/):
 
-## Requirements
-
-- Solax X3 Hybrid G4 inverter with a dongle on the local network
-- The inverter's local IP address and dongle password (usually the dongle serial number)
+1. Install LocalSend on both your computer and phone
+2. Make sure both devices are on the same WiFi network
+3. Open LocalSend on both devices
+4. [Download the latest APK](https://github.com/sranka/solax-fve-live-app/releases)
+5. From your computer, send the APK file
+6. Accept the file on your phone/TV and open it to install
+7. You may need to allow installation from unknown sources in your phone's settings
+8. Open the application and connect to your Solax inverter. You need to know the IP address of your Solax dongle.
 
 ## Web Application
 
+Web application is run with [Node.js 18+](https://nodejs.org/en/download), no other dependencies are required.
+
 ```bash
-PROXY_TARGET=http://192.168.199.192 pnpm start
+MODBUS=1 PROXY_TARGET=http://192.168.199.192 node .
 ```
 
-Starts a Node.js HTTP server at [http://localhost:8080](http://localhost:8080) that serves the web app and proxies HTTP POST requests to the inverter specified by `PROXY_TARGET`. This avoids CORS/mixed-content issues without any special browser flags.
+An HTTP server is started at [http://localhost:8080](http://localhost:8080). It serves the web app and proxies HTTP POST requests to the inverter specified by `PROXY_TARGET`. This avoids CORS/mixed-content issues without any special browser flags.
 
 The server also acts as an HTTP proxy to Solax Modbus TCP. Set `MODBUS=1` to make Modbus the default for POST requests (the Modbus host is derived from `PROXY_TARGET`). Both `/http` and `/modbus` endpoints are also available for side-by-side comparison.
 
@@ -48,17 +57,18 @@ PROXY_TARGET=http://192.168.199.192 pnpm start
 MODBUS=1 PROXY_TARGET=http://192.168.199.192 pnpm start
 ```
 
-## Android App
+## Development
+### Android App
 
 The project uses [Capacitor](https://capacitorjs.com/) to wrap the web app into a native Android application. This removes the HTTPS/mixed-content restriction — the app can freely connect to inverters over Solax Modbus TCP or to Solax local HTTP API on the local network.
 
-### Prerequisites
+#### Prerequisites
 
 - Node.js 18+
 - JDK 21 (the project includes `.sdkmanrc` for [SDKMAN!](https://sdkman.io/) users)
 - Android Studio (optional — you can build from the command line)
 
-### Build APK
+#### Build APK
 
 ```bash
 pnpm install
@@ -74,64 +84,6 @@ npx cap open android
 ```
 
 Then **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
-
-### Install on phone
-
-The easiest way to install the APK on your phone without a USB cable is via [LocalSend](https://localsend.org/):
-
-1. Install LocalSend on both your computer and phone
-2. Make sure both devices are on the same WiFi network
-3. Open LocalSend on both devices
-4. From your computer, send the APK file: `android/app/build/outputs/apk/debug/app-debug.apk`
-5. Accept the file on your phone and open it to install
-6. You may need to allow installation from unknown sources in your phone's settings
-
-Other options for transferring the APK: email, cloud storage (Google Drive, etc.), or serve it over HTTP:
-
-```bash
-cd android/app/build/outputs/apk/debug
-python3 -m http.server 8080
-```
-
-Then open `http://<your-computer-ip>:8080/app-debug.apk` on your phone.
-
-## iOS App
-
-The project also uses [Capacitor](https://capacitorjs.com/) to wrap the web app into a native iOS application. Like the Android version, this removes the HTTPS/mixed-content restriction — the app can freely connect to inverters over Solax Modbus TCP or to Solax local HTTP API on the local network.
-
-### Prerequisites
-
-- Node.js 18+
-- Xcode (with command-line tools installed)
-- An Apple Developer account (free account works for personal device testing)
-
-### Build
-
-```bash
-pnpm install
-pnpm run build:ios
-```
-
-Alternatively, open the project in Xcode and build from there:
-
-```bash
-npx cap open ios
-```
-
-Then select your target device or simulator and hit **Product > Build** (⌘B).
-
-### Install on iPhone
-
-1. Open the project in Xcode: `npx cap open ios`
-2. Connect your iPhone via USB (or set up wireless debugging)
-3. Select your iPhone as the build target
-4. Set your Apple Developer team in **Signing & Capabilities** (under the "App" target)
-5. Hit **Run** (⌘R) — Xcode will build, install, and launch the app on your phone
-6. On first install, you may need to trust the developer certificate on your iPhone: **Settings > General > VPN & Device Management**
-
-## Remote Hosting
-
-The web application can be deployed as a server to expose the inverter API remotely — for example, on a Raspberry Pi with a [Cloudflare Tunnel](docs/remote-hosting-through-raspberry-pi.md).
 
 ## License
 

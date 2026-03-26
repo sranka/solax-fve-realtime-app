@@ -20,7 +20,7 @@ fi
 
 TAG="v${VERSION}"
 APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
-APK_NAME="solax-fve-realtime-${TAG}.apk"
+APK_NAME="solax-fve-live-${TAG}.apk"
 
 echo "==> Releasing ${TAG}..."
 
