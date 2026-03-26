@@ -38,16 +38,17 @@ The web application can be installed as a PWA on any device — phone, tablet, o
 
 **Note:** Unlike the native Android app, a PWA runs inside the browser and cannot connect directly to the inverter on your local network due to browser security restrictions (CORS, mixed content). You need to use the web application's proxy server (see [Web Application](#web-application) below) or an HTTPS proxy to access your inverter.
 
-1. Open the web app in Chrome (or another [supported browser](https://web.dev/learn/pwa/installation))
-2. Open the **Settings** menu (⚙ icon)
-3. Tap the **📲 install icon** in the Settings header
-4. Follow the browser prompt to install
+1. Open the web app in your browser
+   - Running the app from an **HTTPS** URL, such as https://solax-fve-realtime-app.sranka.fun, will disallow connections to inverters over HTTP, because browsers block mixed content (HTTPS→HTTP)
+   - Running the app from an **HTTP** URL, such as http://localhost:8080, allows both HTTP and HTTPS connections — follow the instructions in the [Web Application Server](#web-application-server) section below to set this up
+2. **Chrome / Edge:** Open the **Settings** menu (⚙ icon), tap the **📲 install icon** in the Settings header, and follow the browser prompt
+3. **Safari (macOS):** Choose **File → Add to Dock**
 
 For more details on how PWA installation works, see [web.dev — Install your PWA](https://web.dev/learn/pwa/installation).
 
-## Web Application
+## Web Application Server
 
-Web application is run with [Node.js 18+](https://nodejs.org/en/download), no other dependencies are required.
+Web application server is run with [Node.js 18+](https://nodejs.org/en/download), no other dependencies are required.
 
 ```bash
 MODBUS=1 PROXY_TARGET=http://192.168.199.192 node scripts/server.js
