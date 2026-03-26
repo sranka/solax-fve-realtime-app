@@ -22,6 +22,9 @@ android/app/src/main/assets/public/
 # Generated build info
 web/build-info.js
 
+# Wrangler
+.wrangler/
+
 # Misc
 *.log
 # igore npm lockfiles, as they are not used in this project, pnpm is used instead

@@ -10,6 +10,7 @@
     "build:android": "sh scripts/stamp-build.sh && npx cap sync android && cd android && ./gradlew assembleDebug",
     "build:ios": "sh scripts/stamp-build.sh && npx cap sync ios && cd ios/App && xcodebuild -project App.xcodeproj -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' build CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=NO",
     "release": "sh scripts/release.sh",
+    "deploy:sranka": "sh scripts/stamp-build.sh && wrangler deploy --env sranka",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -21,5 +22,9 @@
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
     "@capacitor/ios": "^8.2.0"
-  }
+  },
+  "devDependencies": {
+    "wrangler": "^4.77.0"
+  },
+  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
 }

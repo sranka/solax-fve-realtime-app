@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "solax-fve-realtime-app",
+  "compatibility_date": "2026-03-26",
+  "assets": {
+    "directory": "./web",
+    "not_found_handling": "single-page-application"
+  },
+  "env": {
+    "sranka":{
+      "account_id": "0ef2d213ab6df117010608d4913d8f1c",
+			"routes": [
+				{
+					"pattern": "solax-fve-realtime-app.sranka.fun",
+					"custom_domain": true
+				}
+			],      
+    }
+  }
+}
