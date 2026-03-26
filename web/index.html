@@ -738,6 +738,7 @@
     </div>
     <div class="modal-body">
       <div class="conn-list" id="connList"></div>
+      <button class="btn btn-secondary" id="scanNetworkBtn" style="display:none;margin-bottom:8px"></button>
       <button class="btn btn-primary" id="addNewConn"></button>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:16px;border-top:1px solid var(--card-border)">
         <span id="themeLabel" style="color:var(--text-dim);font-size:14px"></span>
@@ -811,6 +812,20 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" id="cancelEdit"></button>
       <button class="btn btn-primary" id="saveConn"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Scan Network Modal -->
+<div class="modal-overlay" id="scanModal">
+  <div class="modal">
+    <div class="modal-header"><h2 id="scanTitle"></h2></div>
+    <div class="modal-body">
+      <div id="scanProgress" style="font-size:13px;color:var(--text-dim);margin-bottom:12px"></div>
+      <div id="scanResults" class="conn-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="scanStop"></button>
     </div>
   </div>
 </div>
@@ -911,6 +926,14 @@ const i18n = {
     themeAuto: 'Auto',
     themeLight: 'Světlý',
     themeDark: 'Tmavý',
+    scanNetwork: 'Skenovat síť',
+    scanTitle: 'Skenování sítě',
+    scanProgress: 'Skenování… {scanned}/{total}',
+    scanDone: 'Skenování dokončeno',
+    scanNoDevices: 'Žádná zařízení nenalezena',
+    scanStop: 'Zastavit',
+    scanClose: 'Zavřít',
+    scanNotOnWifi: 'Nejste připojeni k WiFi',
   },
   en: {
     disconnected: 'Not connected',
@@ -988,6 +1011,14 @@ const i18n = {
     themeAuto: 'Auto',
     themeLight: 'Light',
     themeDark: 'Dark',
+    scanNetwork: 'Scan network',
+    scanTitle: 'Scanning network',
+    scanProgress: 'Scanning… {scanned}/{total}',
+    scanDone: 'Scan complete',
+    scanNoDevices: 'No devices found',
+    scanStop: 'Stop',
+    scanClose: 'Close',
+    scanNotOnWifi: 'Not connected to WiFi',
   }
 };
 
@@ -1086,6 +1117,11 @@ function applyLanguage() {
   document.getElementById('hintHeaders').textContent = t('httpHeadersHint');
   document.getElementById('saveConn').textContent = t('save');
   document.getElementById('cancelEdit').textContent = t('cancel');
+
+  // Scan modal
+  document.getElementById('scanTitle').textContent = t('scanTitle');
+  document.getElementById('scanStop').textContent = t('scanStop');
+  document.getElementById('scanNetworkBtn').textContent = t('scanNetwork');
 
   // Confirm dialog
   document.getElementById('confirmNo').textContent = t('confirmNo');
@@ -1545,6 +1581,7 @@ document.addEventListener('keydown',function(e){
     e.preventDefault();
     const top=_focusStack[_focusStack.length-1];
     if(top.modal.id==='confirmOverlay') closeConfirmDialog();
+    else if(top.modal.id==='scanModal') closeScanModal();
     else if(top.modal.id==='editModal') closeEditModal();
     else if(top.modal.id==='settingsModal') closeSettingsModal();
     return;
@@ -1673,12 +1710,101 @@ document.getElementById('advancedToggle').addEventListener('click',()=>{
   chev.classList.toggle('open',open);
 });
 
-// Add Modbus TCP option when running as native app
+// Add Modbus TCP option and scan button when running as native app
 if(typeof Capacitor!=='undefined'&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()){
   const sel=document.getElementById('cfgProtocol');
   const opt=document.createElement('option');opt.value='modbus';opt.textContent='Modbus TCP';
   sel.insertBefore(opt,sel.firstChild);
+  document.getElementById('scanNetworkBtn').style.display='';
 }
+
+// ═══════════════════════════════════════════
+//  Network Scanner
+// ═══════════════════════════════════════════
+var _scanAborted=false;
+function closeScanModal(){
+  _scanAborted=true;
+  document.getElementById('scanModal').classList.remove('open');
+  releaseFocus();
+}
+document.getElementById('scanStop').addEventListener('click',closeScanModal);
+document.getElementById('scanModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeScanModal()});
+
+async function startNetworkScan(){
+  if(typeof Capacitor==='undefined'||!Capacitor.Plugins.NetworkScanner){return;}
+  _scanAborted=false;
+  const resultsEl=document.getElementById('scanResults');
+  const progressEl=document.getElementById('scanProgress');
+  const stopBtn=document.getElementById('scanStop');
+  resultsEl.innerHTML='';
+  progressEl.textContent=t('scanProgress').replace('{scanned}','0').replace('{total}','…');
+  stopBtn.textContent=t('scanStop');
+  document.getElementById('scanTitle').textContent=t('scanTitle');
+
+  const modal=document.getElementById('scanModal');
+  modal.classList.add('open');
+  trapFocus(modal,stopBtn);
+
+  let subnet;
+  try{
+    subnet=await Capacitor.Plugins.NetworkScanner.getSubnet({});
+  }catch(e){
+    progressEl.textContent=t('scanNotOnWifi');
+    stopBtn.textContent=t('scanClose');
+    return;
+  }
+
+  const total=subnet.count;
+  let scanned=0;
+  let found=0;
+  const batchSize=32;
+
+  for(let start=1;start<=total&&!_scanAborted;start+=batchSize){
+    const end=Math.min(start+batchSize-1,total);
+    const promises=[];
+    for(let i=start;i<=end;i++){
+      const host=subnet.prefix+i;
+      promises.push(
+        Capacitor.Plugins.NetworkScanner.scanHost({host}).then(r=>{
+          scanned++;
+          if(r.found&&!_scanAborted){
+            found++;
+            const label=r.serial||r.host;
+            const detail=[r.factory,r.module].filter(Boolean).join(' ');
+            const el=document.createElement('div');
+            el.className='conn-item';
+            el.innerHTML='<div class="conn-item-info" tabindex="0" role="button"><div class="conn-item-name">'+esc(label)+'</div><div class="conn-item-host">'+esc(r.host)+(detail?' — '+esc(detail):'')+'</div></div>';
+            el.querySelector('.conn-item-info').addEventListener('click',()=>{
+              addScannedConnection(r.host,label);
+              closeScanModal();
+            });
+            resultsEl.appendChild(el);
+          }
+          progressEl.textContent=t('scanProgress').replace('{scanned}',scanned).replace('{total}',total);
+        }).catch(()=>{ scanned++; })
+      );
+    }
+    await Promise.all(promises);
+  }
+
+  if(!_scanAborted){
+    progressEl.textContent=t('scanDone')+(found===0?' — '+t('scanNoDevices'):'');
+    stopBtn.textContent=t('scanClose');
+  }
+}
+
+function addScannedConnection(host){
+  const id=generateId();
+  const entry={id,name:host,host:host,password:'',protocol:'modbus',interval:10,manualRefresh:false};
+  connections.push(entry);
+  if(connections.length===1){activeId=id;setActiveId(id);}
+  saveConnections(connections);
+  renderConnList();
+  if(connections.length===1) startPolling();
+  showToast(t('saved'),'success');
+}
+
+document.getElementById('scanNetworkBtn').addEventListener('click',startNetworkScan);
 
 document.getElementById('saveConn').addEventListener('click',async()=>{
   const host=document.getElementById('cfgHost').value.trim();
