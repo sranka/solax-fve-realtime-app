@@ -36,7 +36,7 @@ The easiest way to install the APK package on your phone without a USB cable is 
 Web application is run with [Node.js 18+](https://nodejs.org/en/download), no other dependencies are required.
 
 ```bash
-MODBUS=1 PROXY_TARGET=http://192.168.199.192 node .
+MODBUS=1 PROXY_TARGET=http://192.168.199.192 node scripts/server.js
 ```
 
 An HTTP server is started at [http://localhost:8080](http://localhost:8080). It serves the web app and proxies HTTP POST requests to the inverter specified by `PROXY_TARGET`. This avoids CORS/mixed-content issues without any special browser flags.
