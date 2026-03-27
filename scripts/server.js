@@ -7,10 +7,11 @@ const PORT = parseInt(process.env.PORT || '8080', 10);
 const PROXY_TARGET = process.env.PROXY_TARGET || '';
 const MODBUS_TARGET = process.env.MODBUS_TARGET || '';
 const MODBUS_DEFAULT = process.env.MODBUS === '1';
-const MODBUS_DEBUG = !!process.env.MODBUS_DEBUG;
+const MODBUS_DEBUG = process.env.MODBUS_DEBUG === '1';
 const CORS_ORIGIN = process.env.CORS_ORIGIN === undefined ? '*' : process.env.CORS_ORIGIN;
 const CORS_HEADERS = process.env.CORS_HEADERS === undefined ? '*' : process.env.CORS_HEADERS;
 const WEB_DIR = path.join(__dirname, '..', 'web');
+const MODBUS_INSPECT = process.env.MODBUS_INSPECT === '1';
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -428,7 +429,7 @@ async function handleModbusRead(req, res, addrHex, params) {
   const fc = parseInt(params.get('fc') || '0x04', 16) || 0x04;
   const length = Math.max(1, Math.min(125, parseInt(params.get('length') || '1', 10) || 1));
 
-  console.log(`Modbus read request: address=0x${startAddr.toString(16).padStart(4, '0')}, fc=0x${fc.toString(16).padStart(2, '0')}, length=${length}`);
+  console.log(`Modbus inspection request: address=0x${startAddr.toString(16).padStart(4, '0')}, fc=0x${fc.toString(16).padStart(2, '0')}, length=${length}`);
 
   try {
     const { host, port } = target;
@@ -515,14 +516,16 @@ const server = http.createServer((req, res) => {
       handleHttpProxy(req, res);
     }
   } else {
-    const modbusReadMatch = url.match(/^\/modbus\/([0-9a-fA-F]+)/);
-    if (modbusReadMatch) {
-      handleModbusRead(req, res, modbusReadMatch[1], new URLSearchParams(queryStr));
-    } else if (url === '/modbus') {
-      handleModbus(req, res);
-    } else {
-      serveStatic(req, res);
+    if (MODBUS_INSPECT) {
+      // allow reading modbus registers over HTTP for debugging, e.g. /modbus/0000?length=21&fc=0x03
+      const modbusReadMatch = url.match(/^\/modbus\/([0-9a-fA-F]+)/);
+      if (modbusReadMatch) {
+        return handleModbusRead(req, res, modbusReadMatch[1], new URLSearchParams(queryStr));
+      } else if (url === '/modbus') {
+        return handleModbus(req, res);
+      }
     }
+    serveStatic(req, res);
   }
 });
 

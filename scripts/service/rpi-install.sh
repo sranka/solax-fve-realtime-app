@@ -61,6 +61,8 @@ PROXY_TARGET=http://192.168.199.192
 
 # Set MODBUS=1 to use Modbus TCP as the default protocol for POST /
 MODBUS=1
+# Set MODBUS_INSPECT=1 to allow reading Modbus registers over HTTP GET for debugging (e.g. /modbus , /modbus/0000?length=21&fc=0x03)
+# MODBUS_INSPECT=1
 
 # CORS — uncomment to restrict cross-origin requests from browsers
 # CORS_ORIGIN sets the Access-Control-Allow-Origin header value (e.g. * or https://example.com)
