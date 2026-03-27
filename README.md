@@ -5,6 +5,7 @@ Live monitoring app for Solax X3 Hybrid G4 inverters. The Android app connects d
 <a href="docs/tablet-screenshot.png"><img src="docs/tablet-screenshot.png" height="300" alt="Solax FVE Monitor on Tablet"></a> <a href="docs/phone-screenshot.png"><img src="docs/phone-screenshot.png" height="300" alt="Solax FVE Monitor on Phone"></a>
 
 - Tested with **Solax X3 Hybrid G4**, **Pocket WiFi 3.0 dongle**
+- Scans your home network in order to find your Solax inverter 
 - Live power flow visualization (Solar, Battery, Grid, Home consumption)
 - 3-phase grid details (voltage, current, power, frequency)
 - Battery status (SoC, voltage, temperature, charge/discharge)
