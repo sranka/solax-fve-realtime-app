@@ -1,6 +1,6 @@
 # Solax FVE Live Monitor
 
-Live monitoring app for Solax X3 Hybrid G4 inverters. The Android app connects directly to the inverter on your home network. A web application is also provided for non-Android devices and for remote access over HTTPS to a provided proxy that must be run in your home network.
+Live monitoring app for Solax X3 Hybrid G4 inverters. The Android app connects directly to the inverter on your home network. A web application is also provided for non-Android devices and for remote access outside your home network to a provided proxy that must be run within your home network.
 
 <a href="docs/tablet-screenshot.png"><img src="docs/tablet-screenshot.png" height="300" alt="Solax FVE Monitor on Tablet"></a> <a href="docs/phone-screenshot.png"><img src="docs/phone-screenshot.png" height="300" alt="Solax FVE Monitor on Phone"></a>
 
