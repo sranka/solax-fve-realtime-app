@@ -36,6 +36,13 @@
                 <data android:scheme="srankasolax" />
             </intent-filter>
 
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="solax.sranka.fun" android:pathPrefix="/send/" />
+            </intent-filter>
+
         </activity>
 
         <provider

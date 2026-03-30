@@ -2159,8 +2159,8 @@ document.getElementById('receiveSettingsBtn').addEventListener('click',openTrans
 // Transfer: Deep link handler (Phone side — sends settings to TV)
 window._handleDeepLink=function(urlStr){
   try{
-    // Parse URL: srankasolax://send/<ip>/<port>/<token>
-    var match=urlStr.match(/^srankasolax:\/\/send\/([^\/]+)\/(\d+)\/([^\/]+)$/i);
+    // Parse URL: srankasolax://send/<ip>/<port>/<token> or https://solax.sranka.fun/send/<ip>/<port>/<token>
+    var match=urlStr.match(/\/send\/([^\/]+)\/(\d+)\/([^\/]+)$/i);
     if(!match)return;
     var to=match[1]+':'+match[2];
     var token=match[3];
