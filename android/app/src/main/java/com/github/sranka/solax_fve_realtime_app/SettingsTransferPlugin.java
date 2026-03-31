@@ -8,6 +8,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 
 import android.content.Context;
 import android.net.wifi.WifiManager;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 @CapacitorPlugin(name = "SettingsTransfer")
 public class SettingsTransferPlugin extends Plugin {
 
+    private static final String TAG = "SettingsTransfer";
     private static final int DEFAULT_PORT = 8765;
     private static final int TIMEOUT_SECONDS = 600;
 
@@ -34,18 +36,22 @@ public class SettingsTransferPlugin extends Plugin {
 
     @PluginMethod
     public void getLocalIp(PluginCall call) {
+        Log.d(TAG, "getLocalIp called");
         WifiManager wm = (WifiManager) getContext().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         if (wm == null) {
+            Log.e(TAG, "getLocalIp: WifiManager not available");
             call.reject("WifiManager not available");
             return;
         }
         android.net.wifi.WifiInfo info = wm.getConnectionInfo();
         int ip = info.getIpAddress();
         if (ip == 0) {
+            Log.w(TAG, "getLocalIp: Not connected to WiFi (ip=0)");
             call.reject("Not connected to WiFi");
             return;
         }
         String ipStr = (ip & 0xFF) + "." + ((ip >> 8) & 0xFF) + "." + ((ip >> 16) & 0xFF) + "." + ((ip >> 24) & 0xFF);
+        Log.i(TAG, "getLocalIp: " + ipStr);
         JSObject result = new JSObject();
         result.put("ip", ipStr);
         call.resolve(result);
@@ -54,12 +60,14 @@ public class SettingsTransferPlugin extends Plugin {
     @PluginMethod
     public synchronized void startServer(PluginCall call) {
         if (serverSocket != null) {
+            Log.w(TAG, "startServer: server already running");
             call.reject("Server already running");
             return;
         }
 
         int port = call.getInt("port", DEFAULT_PORT);
         String token = call.getString("token", "");
+        Log.i(TAG, "startServer: port=" + port + " token=" + (token.isEmpty() ? "(none)" : token.substring(0, Math.min(4, token.length())) + "..."));
 
         call.setKeepAlive(true);
         pendingCall = call;
@@ -67,7 +75,9 @@ public class SettingsTransferPlugin extends Plugin {
         try {
             serverSocket = new ServerSocket(port);
             serverSocket.setSoTimeout(TIMEOUT_SECONDS * 1000);
+            Log.i(TAG, "startServer: listening on port " + port + " (timeout=" + TIMEOUT_SECONDS + "s)");
         } catch (IOException e) {
+            Log.e(TAG, "startServer: failed to bind port " + port, e);
             pendingCall = null;
             call.setKeepAlive(false);
             call.reject("Failed to start server: " + e.getMessage());
@@ -75,6 +85,7 @@ public class SettingsTransferPlugin extends Plugin {
         }
 
         timeoutFuture = scheduler.schedule(() -> {
+            Log.w(TAG, "startServer: timeout after " + TIMEOUT_SECONDS + "s, closing server");
             closeServer();
             if (pendingCall != null) {
                 pendingCall.reject("Timeout waiting for connection");
@@ -84,11 +95,14 @@ public class SettingsTransferPlugin extends Plugin {
 
         new Thread(() -> {
             try {
+                Log.d(TAG, "startServer: waiting for client connection...");
                 Socket client = serverSocket.accept();
+                Log.i(TAG, "startServer: client connected from " + client.getRemoteSocketAddress());
                 handleClient(client, token);
             } catch (SocketTimeoutException e) {
-                // timeout handled by scheduler
+                Log.w(TAG, "startServer: socket accept timed out");
             } catch (IOException e) {
+                Log.e(TAG, "startServer: server error", e);
                 synchronized (SettingsTransferPlugin.this) {
                     if (pendingCall != null) {
                         pendingCall.reject("Server error: " + e.getMessage());
@@ -109,7 +123,9 @@ public class SettingsTransferPlugin extends Plugin {
 
             // Read request line
             String requestLine = reader.readLine();
+            Log.d(TAG, "handleClient: requestLine=" + requestLine);
             if (requestLine == null) {
+                Log.w(TAG, "handleClient: null request line, sending 400");
                 sendResponse(out, 400, "Bad Request");
                 return;
             }
@@ -117,34 +133,40 @@ public class SettingsTransferPlugin extends Plugin {
             // Parse method and path
             String[] parts = requestLine.split(" ");
             if (parts.length < 2) {
+                Log.w(TAG, "handleClient: malformed request line: " + requestLine);
                 sendResponse(out, 400, "Bad Request");
                 return;
             }
 
             String method = parts[0];
             String path = parts[1];
+            Log.d(TAG, "handleClient: method=" + method + " path=" + path);
 
             // Handle CORS preflight
             if ("OPTIONS".equals(method)) {
+                Log.d(TAG, "handleClient: CORS preflight, sending 204 and waiting for POST");
                 sendCorsResponse(out);
                 // After preflight, accept another connection for the actual POST
                 client.close();
                 try {
                     Socket postClient = serverSocket.accept();
+                    Log.d(TAG, "handleClient: post-preflight client connected from " + postClient.getRemoteSocketAddress());
                     handleClient(postClient, expectedToken);
                 } catch (IOException e) {
-                    // ignore
+                    Log.e(TAG, "handleClient: error accepting post-preflight connection", e);
                 }
                 return;
             }
 
             if (!"POST".equals(method)) {
+                Log.w(TAG, "handleClient: rejecting method " + method + " with 405");
                 sendResponse(out, 405, "Method Not Allowed");
                 return;
             }
 
             // Validate token in path
             if (!expectedToken.isEmpty() && !path.contains("token=" + expectedToken)) {
+                Log.w(TAG, "handleClient: token mismatch, sending 403");
                 sendResponse(out, 403, "Forbidden");
                 return;
             }
@@ -157,6 +179,7 @@ public class SettingsTransferPlugin extends Plugin {
                     contentLength = Integer.parseInt(line.substring(15).trim());
                 }
             }
+            Log.d(TAG, "handleClient: content-length=" + contentLength);
 
             // Read body
             char[] body = new char[contentLength];
@@ -167,6 +190,8 @@ public class SettingsTransferPlugin extends Plugin {
                 read += r;
             }
             String bodyStr = new String(body, 0, read);
+            Log.i(TAG, "handleClient: received body (" + read + " bytes)");
+            Log.d(TAG, "handleClient: body=" + bodyStr.substring(0, Math.min(200, bodyStr.length())) + (bodyStr.length() > 200 ? "..." : ""));
 
             // Send success response with CORS headers
             String responseBody = "{\"ok\":true}";
@@ -182,6 +207,7 @@ public class SettingsTransferPlugin extends Plugin {
             out.write(response.getBytes("UTF-8"));
             out.flush();
             client.close();
+            Log.d(TAG, "handleClient: sent 200 OK, client closed");
 
             // Resolve the pending call with received data
             synchronized (this) {
@@ -192,10 +218,12 @@ public class SettingsTransferPlugin extends Plugin {
                     JSObject result = new JSObject();
                     result.put("data", bodyStr);
                     pendingCall.resolve(result);
+                    Log.i(TAG, "handleClient: resolved pending call with data");
                     pendingCall = null;
                 }
             }
         } catch (IOException e) {
+            Log.e(TAG, "handleClient: error", e);
             synchronized (this) {
                 if (pendingCall != null) {
                     pendingCall.reject("Error handling client: " + e.getMessage());
@@ -232,6 +260,7 @@ public class SettingsTransferPlugin extends Plugin {
 
     @PluginMethod
     public synchronized void stopServer(PluginCall call) {
+        Log.i(TAG, "stopServer called");
         closeServer();
         if (pendingCall != null) {
             pendingCall.reject("Server stopped");
@@ -241,6 +270,7 @@ public class SettingsTransferPlugin extends Plugin {
     }
 
     private synchronized void closeServer() {
+        Log.d(TAG, "closeServer: closing server socket");
         if (timeoutFuture != null) {
             timeoutFuture.cancel(false);
             timeoutFuture = null;
