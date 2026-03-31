@@ -10,9 +10,7 @@ import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
@@ -123,14 +121,29 @@ public class SettingsTransferPlugin extends Plugin {
     }
 
     /** Returns true if a POST was successfully handled, false for OPTIONS/errors (caller should accept again). */
+    /** Read a line (up to \r\n or \n) from a raw InputStream. Returns null on EOF. */
+    private static String readHttpLine(java.io.InputStream in) throws IOException {
+        StringBuilder sb = new StringBuilder(128);
+        int c;
+        while ((c = in.read()) != -1) {
+            if (c == '\r') {
+                int next = in.read(); // consume \n after \r
+                break;
+            }
+            if (c == '\n') break;
+            sb.append((char) c);
+        }
+        return (c == -1 && sb.length() == 0) ? null : sb.toString();
+    }
+
     private boolean handleClient(Socket client, String expectedToken) {
         try {
             client.setSoTimeout(10000);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
+            java.io.InputStream rawIn = client.getInputStream();
             OutputStream out = client.getOutputStream();
 
             // Read request line
-            String requestLine = reader.readLine();
+            String requestLine = readHttpLine(rawIn);
             Log.d(TAG, "handleClient: requestLine=" + requestLine);
             if (requestLine == null) {
                 Log.w(TAG, "handleClient: null request line, sending 400");
@@ -174,22 +187,22 @@ public class SettingsTransferPlugin extends Plugin {
             // Read headers to find Content-Length
             int contentLength = 0;
             String line;
-            while ((line = reader.readLine()) != null && !line.isEmpty()) {
+            while ((line = readHttpLine(rawIn)) != null && !line.isEmpty()) {
                 if (line.toLowerCase().startsWith("content-length:")) {
                     contentLength = Integer.parseInt(line.substring(15).trim());
                 }
             }
             Log.d(TAG, "handleClient: content-length=" + contentLength);
 
-            // Read body
-            char[] body = new char[contentLength];
+            // Read body as raw bytes (Content-Length is in bytes, not characters)
+            byte[] body = new byte[contentLength];
             int read = 0;
             while (read < contentLength) {
-                int r = reader.read(body, read, contentLength - read);
+                int r = rawIn.read(body, read, contentLength - read);
                 if (r == -1) break;
                 read += r;
             }
-            String bodyStr = new String(body, 0, read);
+            String bodyStr = new String(body, 0, read, "UTF-8");
             Log.i(TAG, "handleClient: received body (" + read + " bytes)");
             Log.d(TAG, "handleClient: body=" + bodyStr.substring(0, Math.min(200, bodyStr.length())) + (bodyStr.length() > 200 ? "..." : ""));
 
@@ -257,6 +270,15 @@ public class SettingsTransferPlugin extends Plugin {
     @PluginMethod
     public void sendSettings(PluginCall call) {
         String url = call.getString("url", "");
+        // Support host/port/token parameters from JS deep link handler
+        if (url.isEmpty()) {
+            String host = call.getString("host", "");
+            Integer port = call.getInt("port", DEFAULT_PORT);
+            String token = call.getString("token", "");
+            if (!host.isEmpty()) {
+                url = "http://" + host + ":" + port + "/transfer?token=" + token;
+            }
+        }
         String payload = call.getString("payload", "");
         if (url.isEmpty()) {
             call.reject("Missing url");
@@ -264,10 +286,11 @@ public class SettingsTransferPlugin extends Plugin {
         }
         Log.i(TAG, "sendSettings: url=" + url + " payload length=" + payload.length());
 
+        final String usedUrl = url;
         new Thread(() -> {
             HttpURLConnection conn = null;
             try {
-                conn = (HttpURLConnection) new URL(url).openConnection(Proxy.NO_PROXY);
+                conn = (HttpURLConnection) new URL(usedUrl).openConnection(Proxy.NO_PROXY);
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "text/plain");
                 conn.setConnectTimeout(10000);
