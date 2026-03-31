@@ -743,7 +743,7 @@
       <div style="display:flex;gap:6px;align-items:center">
         <button class="header-btn" id="receiveSettingsBtn" style="display:none" aria-label="Receive settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm-2 8h8v8H3v-8zm2 2v4h4v-4H5zM13 3h8v8h-8V3zm2 2v4h4V5h-4zm4 8h2v2h-2v-2zm-6 0h2v4h4v-2h-2v-2h2v2h2v4h-2v2h-4v-2h-2v-2h2v-2h-2v-2z"/></svg></button>
         <a class="header-btn" id="installAppLink" href="https://github.com/sranka/solax-fve-live-app?tab=readme-ov-file#install-on-android-phone--tv" target="_blank" rel="noopener" aria-label="Install" style="text-decoration:none">📲</a>
-        <a class="header-btn" href="https://github.com/sranka/solax-fve-live-app" target="_blank" rel="noopener" aria-label="GitHub" style="text-decoration:none"><svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
+        <a class="header-btn" id="githubLink" href="https://github.com/sranka/solax-fve-live-app" target="_blank" rel="noopener" aria-label="GitHub" style="text-decoration:none"><svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
       </div>
     </div>
     <div class="modal-body">
@@ -913,6 +913,7 @@ const i18n = {
     resume: 'Pokračovat',
     updated: 'Aktualizace:',
     inverters: '⚙ Střídače',
+    installApp: 'Instalovat aplikaci',
     addInverter: '+ Přidat střídač',
     close: 'Zavřít',
     addInverterTitle: 'Přidat střídač',
@@ -1012,6 +1013,7 @@ const i18n = {
     resume: 'Resume',
     updated: 'Updated:',
     inverters: '⚙ Inverters',
+    installApp: 'Install app',
     addInverter: '+ Add inverter',
     close: 'Close',
     addInverterTitle: 'Add inverter',
@@ -1148,7 +1150,9 @@ function applyLanguage() {
   if (!lastData) document.getElementById('refreshBar').textContent = t('lastUpdate');
 
   // Settings modal
-  document.getElementById('settingsTitle').textContent = t('inverters');
+  document.getElementById('settingsTitle').textContent = t('settings');
+  document.getElementById('installAppLink').title = t('installApp');
+  document.getElementById('githubLink').title = 'GitHub';
   document.getElementById('addNewConn').textContent = t('addInverter');
   document.getElementById('themeLabel').textContent = t('theme');
   document.getElementById('themeBtnAuto').textContent = t('themeAuto');
