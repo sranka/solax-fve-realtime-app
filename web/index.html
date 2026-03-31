@@ -148,6 +148,10 @@
     letter-spacing: 0.02em; text-transform: uppercase;
   }
   .theme-btn { width: 88px; }
+  .zoom-row { display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:16px;border-top:1px solid var(--card-border); }
+  .zoom-control { display:flex;align-items:center;gap:8px; }
+  .zoom-slider { width:120px; accent-color:var(--accent); cursor:pointer; }
+  .zoom-value { color:var(--text-dim); font-size:12px; min-width:36px; text-align:right; }
 
   .error-banner {
     background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
@@ -758,6 +762,13 @@
           <button class="header-btn lang-btn theme-btn" data-theme="dark" id="themeBtnDark"></button>
         </div>
       </div>
+      <div class="zoom-row">
+        <span id="zoomLabel" style="color:var(--text-dim);font-size:14px"></span>
+        <div class="zoom-control">
+          <input type="range" id="zoomSlider" class="zoom-slider" min="0.5" max="1.5" step="0.1" value="1">
+          <span id="zoomValue" class="zoom-value">100%</span>
+        </div>
+      </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:16px;border-top:1px solid var(--card-border)">
         <span id="langLabel" style="color:var(--text-dim);font-size:14px"></span>
         <div style="display:flex;gap:6px" id="langButtons">
@@ -914,6 +925,7 @@ const i18n = {
     updated: 'Aktualizace:',
     inverters: '⚙ Střídače',
     installApp: 'Instalovat aplikaci',
+    zoom: 'Zvětšení',
     addInverter: '+ Přidat střídač',
     close: 'Zavřít',
     addInverterTitle: 'Přidat střídač',
@@ -1014,6 +1026,7 @@ const i18n = {
     updated: 'Updated:',
     inverters: '⚙ Inverters',
     installApp: 'Install app',
+    zoom: 'Zoom',
     addInverter: '+ Add inverter',
     close: 'Close',
     addInverterTitle: 'Add inverter',
@@ -1158,6 +1171,7 @@ function applyLanguage() {
   document.getElementById('themeBtnAuto').textContent = t('themeAuto');
   document.getElementById('themeBtnLight').textContent = t('themeLight');
   document.getElementById('themeBtnDark').textContent = t('themeDark');
+  document.getElementById('zoomLabel').textContent = t('zoom');
   document.getElementById('langLabel').textContent = t('language');
   document.getElementById('closeSettings').textContent = t('close');
 
@@ -1248,6 +1262,43 @@ document.querySelectorAll('#themeButtons .lang-btn').forEach(btn => {
 });
 
 applyTheme(currentTheme);
+
+// ─── Zoom ───
+const ZOOM_KEY = 'solax_fve_zoom';
+let currentZoom = (function() {
+  try {
+    const saved = parseFloat(localStorage.getItem(ZOOM_KEY));
+    if (saved >= 0.5 && saved <= 1.5) return saved;
+  } catch(e) {}
+  return 1;
+})();
+
+function getBaseZoom() {
+  var w = window.innerWidth;
+  if (w >= 2400) return 1.8;
+  if (w >= 1900) return 1.5;
+  if (w >= 1600) return 1.35;
+  if (w >= 1300) return 1.15;
+  return 1;
+}
+
+function applyZoom(val) {
+  currentZoom = Math.round(val * 10) / 10;
+  try { localStorage.setItem(ZOOM_KEY, currentZoom); } catch(e) {}
+  var effective = getBaseZoom() * currentZoom;
+  document.body.style.zoom = effective;
+  document.documentElement.style.setProperty('--modal-max-h', 'calc(90dvh / ' + effective + ')');
+  document.getElementById('zoomSlider').value = currentZoom;
+  document.getElementById('zoomValue').textContent = Math.round(currentZoom * 100) + '%';
+}
+
+document.getElementById('zoomSlider').addEventListener('input', function() {
+  applyZoom(parseFloat(this.value));
+});
+
+window.addEventListener('resize', function() { applyZoom(currentZoom); });
+
+applyZoom(currentZoom);
 
 // ═══════════════════════════════════════════
 //  Multi-connection config in localStorage
